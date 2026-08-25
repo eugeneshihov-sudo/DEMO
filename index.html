@@ -1,0 +1,2509 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Компетенции – 2D + 3D + Симуляция + Библиотека</title>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <style>
+        /* ---------- CSS-ПЕРЕМЕННЫЕ (светлая тема по умолчанию) ---------- */
+        :root {
+            --bg-body: #f5f7fa;
+            --bg-container: #ffffff;
+            --bg-panel: #f8fafc;
+            --bg-panel-hover: #eef2f6;
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            --border-color: #e9edf2;
+            --border-light: #d0d7de;
+            --shadow-color: rgba(0,0,0,0.08);
+            --bg-white: #ffffff;
+            --bg-plot: #fafcff;
+            --btn-bg: #f8fafc;
+            --btn-border: #d0d7de;
+            --btn-hover: #eef2f6;
+            --badge-bg: #e2e8f0;
+            --modal-overlay: rgba(0,0,0,0.4);
+            --gauge-steps-green: lightgreen;
+            --gauge-steps-gold: gold;
+            --gauge-steps-red: salmon;
+            --gauge-bar: darkblue;
+        }
+
+        /* ---------- ТЁМНАЯ ТЕМА ---------- */
+        body.dark-mode {
+            --bg-body: #0f172a;
+            --bg-container: #1e293b;
+            --bg-panel: #334155;
+            --bg-panel-hover: #475569;
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+            --border-color: #475569;
+            --border-light: #64748b;
+            --shadow-color: rgba(0,0,0,0.5);
+            --bg-white: #1e293b;
+            --bg-plot: #1e293b;
+            --btn-bg: #334155;
+            --btn-border: #64748b;
+            --btn-hover: #475569;
+            --badge-bg: #475569;
+            --modal-overlay: rgba(0,0,0,0.7);
+            --gauge-steps-green: #22c55e;
+            --gauge-steps-gold: #eab308;
+            --gauge-steps-red: #ef4444;
+            --gauge-bar: #60a5fa;
+            color-scheme: dark;
+        }
+
+        /* ---------- ОБЩИЕ СТИЛИ ---------- */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-body);
+            padding: 20px;
+            color: var(--text-primary);
+            transition: background 0.3s, color 0.3s;
+        }
+        .app-container {
+            max-width: 2100px;
+            margin: 0 auto;
+            background: var(--bg-container);
+            border-radius: 20px;
+            box-shadow: 0 8px 30px var(--shadow-color);
+            padding: 12px;
+            display: flex;
+            gap: 24px;
+            align-items: flex-start;
+            transition: background 0.3s, box-shadow 0.3s;
+        }
+        .left-panel {
+            flex: 0 0 320px; /* Ширина увеличена до 320px для 2 колонок */
+            min-width: 240px;
+            background: var(--bg-panel);
+            border-radius: 16px;
+            padding: 12px; /* Уменьшен отступ */
+            border: 1px solid var(--border-color);
+            max-height: calc(100vh - 48px); /* Более плотное прилегание к верху/низу */
+            overflow-y: auto;
+            position: sticky;
+            top: 10px;
+            transition: background 0.3s, border-color 0.3s;
+        }
+         .left-panel h3 {
+            font-size: 15px;
+            font-weight: 600;
+            margin: 0 0 10px 0;
+            color: var(--text-primary);
+        }
+        .left-panel .btn {
+            height: 34px;
+            padding: 0 16px;
+            line-height: 34px;
+            font-size: 13px;
+            border-radius: 40px;
+            border: 1px solid var(--btn-border);
+            background: var(--btn-bg);
+            color: var(--text-primary);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+            white-space: nowrap;
+            gap: 4px;
+        }
+        .left-panel .btn:hover { background: var(--btn-hover); }
+        .left-panel .btn-row { display: flex; gap: 6px; margin: 8px 0 6px 0; }
+        .left-panel .btn-row .btn { flex: 1; font-size: 12px; padding: 0 8px; }
+        .left-panel .settings-actions { display: flex; gap: 8px; margin-top: 12px; }
+        .left-panel .settings-actions .btn { flex: 1; font-size: 14px; padding: 0 12px; }
+
+        .btn-primary { background: #1b6b8f; border-color: #1b6b8f; color: white; }
+        .btn-primary:hover { background: #135a7a; }
+        .btn-success { background: #15803d; border-color: #15803d; color: white; }
+        .btn-success:hover { background: #166534; }
+        .btn-warning { background: #d97706; border-color: #d97706; color: white; }
+        .btn-warning:hover { background: #b45309; }
+        .btn-danger { background: #b91c1c; border-color: #b91c1c; color: white; }
+        .btn-danger:hover { background: #991b1b; }
+        .btn-info { background: #0284c7; border-color: #0284c7; color: white; }
+        .btn-info:hover { background: #0369a1; }
+        .btn-secondary { background: #6b7280; border-color: #6b7280; color: white; }
+        .btn-secondary:hover { background: #4b5563; }
+        .btn-outline { background: transparent; border-color: var(--btn-border); color: var(--text-primary); }
+        .btn-outline:hover { background: var(--btn-hover); }
+
+        .left-panel .sum-display { font-weight: 600; font-size: 14px; display: block; margin-bottom: 8px; color: var(--text-primary); }
+        .left-panel .category-props-grid { display: flex; flex-direction: column; gap: 4px; margin: 8px 0 12px 0; }
+        .left-panel .cat-item { display: flex; align-items: center; gap: 8px; width: 100%; }
+        .left-panel .cat-item label { font-size: 12px; width: 90px; flex-shrink: 0; text-align: right; color: var(--text-secondary); }
+        .left-panel .cat-item input[type="range"] { flex: 1; min-width: 40px; accent-color: #1b6b8f; }
+        .left-panel .cat-item .value-display { min-width: 24px; text-align: center; font-weight: 600; font-size: 12px; color: var(--text-primary); }
+        .left-panel .form-group { margin-bottom: 12px; }
+        .left-panel .form-group label { font-weight: 500; font-size: 13px; display: block; margin-bottom: 2px; color: var(--text-secondary); }
+        .left-panel .form-group input, .left-panel .form-group select {
+            width: 100%; padding: 4px 8px; border-radius: 20px;
+            border: 1px solid var(--border-light);
+            font-size: 13px;
+            background: var(--bg-white);
+            color: var(--text-primary);
+        }
+        .left-panel .model-checkboxes { display: flex; flex-wrap: wrap; gap: 2px; margin-top: 4px; }
+        .left-panel .model-checkboxes label {
+            font-size: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: var(--bg-white);
+            padding: 2px 2px 2px 2px;
+            border-radius: 30px;
+            border: 1px solid var(--border-light);
+            line-height: 1.4;
+            height: 28px;
+            white-space: nowrap;
+            cursor: pointer;
+            color: var(--text-primary);
+        }
+        .left-panel .model-checkboxes label input[type="checkbox"] { margin: 0; width: 14px; height: 14px; flex-shrink: 0; }
+
+        .left-panel .stats-block {
+            margin-top: 8px;
+            display: flex;
+            justify-content: space-between;
+            gap: 2px;
+            background: var(--bg-white);
+            padding: 2px 2px;
+            border-radius: 30px;
+            border: 1px solid var(--border-color);
+            font-size: 13px;
+            color: var(--text-primary);
+        }
+        .left-panel .stats-block .stat-item .label { color: var(--text-muted); }
+        .left-panel .stats-block .stat-item .value { font-weight: 600; }
+
+        .right-area { flex: 1; min-width: 0; }
+        header {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        header h1 {
+            font-size: 22px;
+            font-weight: 600;
+            background: linear-gradient(145deg, #0b3b5c, #1b6b8f);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .header-actions .btn { height: 34px; padding: 0 16px; line-height: 34px; font-size: 13px; }
+
+        .main-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2px; margin-top: 10px; }
+
+        @media (max-width: 1000px) { .main-grid { grid-template-columns: 1fr; } .app-container { flex-direction: column; } .left-panel { flex: none; width: 100%; max-height: none; position: static; } }
+
+        .chart-wrapper {
+            background: var(--bg-white);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            padding: 12px;
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            position: relative;
+            transition: background 0.3s, border-color 0.3s;
+        }
+        .chart-wrapper .plot-container { width: 100%; height: 100%; position: absolute; top: 0; left: 0; }
+
+        .library-block {
+            background: var(--bg-white);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            padding: 16px;
+            margin-top: 0;
+            height: 100%; /* Растягиваем на высоту графиков */
+            max-height: 100%;
+            display: flex;          /* Делаем флекс-контейнером */
+            flex-direction: column; /* Элементы идут сверху вниз */
+            overflow: hidden;       /* Прокрутка отключена для всего блока */
+            transition: background 0.3s, border-color 0.3s;
+        }
+
+        .library-block .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .library-block .header h4 { font-size: 15px; font-weight: 600; margin: 0; color: var(--text-primary); }
+        .library-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg-panel);
+            padding: 4px 8px;     /* Уменьшаем внутренние отступы */
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            font-size: 12px;      /* Основной шрифт меньше */
+            color: var(--text-primary);
+            flex-shrink: 0;       /* Чтобы элементы не сжимались при прокрутке */
+        }
+        .library-item .info { display: flex; gap: 8px; align-items: center; }
+        .library-item .info .name { font-weight: 500; font-size: 12px; }
+        .library-item .info .meta { color: var(--text-muted); font-size: 11px; }
+        .library-item .actions { display: flex; gap: 4px; }
+        .library-item .actions .btn {
+            height: 24px;
+            padding: 0 6px;
+            font-size: 14px; /* Размер эмодзи */
+            line-height: 24px;
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-muted);
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        .library-item .actions .btn:hover {
+            background: var(--bg-panel-hover);
+        }
+        .library-item .actions .btn.load-lib:hover {
+            color: #15803d;
+            border-color: #15803d;
+        }
+        .library-item .actions .btn.delete-lib:hover {
+            color: #b91c1c;
+            border-color: #b91c1c;
+        }
+        .empty-library { color: var(--text-muted); font-style: italic; text-align: center; padding: 12px 0; font-size: 13px; }
+
+        .simulation-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            margin: 16px 0 12px 0;
+            padding: 12px 16px;
+            background: var(--bg-panel);
+            border-radius: 40px;
+            border: 1px solid var(--border-color);
+            transition: background 0.3s, border-color 0.3s;
+        }
+        .simulation-controls label { font-weight: 500; font-size: 14px; color: var(--text-secondary); }
+        .simulation-controls input[type="range"] { width: 120px; accent-color: #1b6b8f; }
+        .sim-status { font-weight: 600; margin-left: auto; color: var(--text-primary); }
+
+        .trend-container-full { width: 100%; height: 500px; margin-top: 12px; background: var(--bg-white); border-radius: 16px; border: 1px solid var(--border-color); padding: 12px; transition: background 0.3s, border-color 0.3s; }
+        .trend-plot { width: 100%; height: 100%; }
+
+        .table-wrapper {
+            background: var(--bg-white);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            max-height: 500px;
+            margin-top: 16px;
+            transition: background 0.3s, border-color 0.3s;
+        }
+        .table-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 14px;
+            align-items: center;
+        }
+        .table-controls select, .table-controls input {
+            padding: 6px 12px;
+            border-radius: 30px;
+            border: 1px solid var(--border-light);
+            font-size: 13px;
+            background: var(--bg-white);
+            color: var(--text-primary);
+        }
+        .table-controls .total-cost { margin-left: auto; font-weight: 600; background: var(--bg-panel); padding: 4px 16px; border-radius: 30px; font-size: 15px; color: var(--text-primary); }
+        .table-scroll { overflow-y: auto; flex: 1; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th {
+            background: var(--bg-panel);
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            padding: 8px 6px;
+            text-align: left;
+            cursor: pointer;
+            user-select: none;
+            border-bottom: 2px solid var(--border-color);
+            color: var(--text-primary);
+        }
+        th:hover { background: var(--bg-panel-hover); }
+        td { padding: 6px 6px; border-bottom: 1px solid var(--border-color); vertical-align: middle; color: var(--text-primary); }
+        tr:hover td { background: var(--bg-panel-hover); }
+        .actions-cell { display: flex; gap: 4px; }
+        .actions-cell button { background: none; border: none; cursor: pointer; font-size: 16px; padding: 2px 4px; border-radius: 6px; transition: 0.2s; color: var(--text-primary); }
+        .actions-cell button:hover { background: var(--bg-panel-hover); }
+        .badge { display: inline-block; padding: 2px 10px; border-radius: 30px; font-size: 11px; font-weight: 600; background: var(--badge-bg); color: var(--text-primary); }
+
+        /* Модальные окна */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--modal-overlay);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: var(--bg-white);
+            border-radius: 24px;
+            max-width: 700px;
+            width: 92%;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 32px 36px;
+            box-shadow: 0 25px 60px var(--shadow-color);
+            position: relative;
+            color: var(--text-primary);
+            transition: background 0.3s, box-shadow 0.3s;
+        }
+        .modal-close { position: absolute; top: 16px; right: 22px; font-size: 28px; background: none; border: none; cursor: pointer; color: var(--text-muted); }
+        .modal-close:hover { color: var(--text-primary); }
+        .modal h2 { font-size: 22px; margin-bottom: 20px; font-weight: 600; color: var(--text-primary); }
+        .form-group { margin-bottom: 18px; }
+        .form-group label { display: block; font-weight: 500; margin-bottom: 4px; font-size: 14px; color: var(--text-secondary); }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 8px 14px; border: 1px solid var(--border-light); border-radius: 30px; font-size: 14px;
+            background: var(--bg-white); color: var(--text-primary);
+        }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+        .modal-footer { margin-top: 24px; display: flex; justify-content: flex-end; gap: 12px; }
+                .readme-content {
+            max-height: 60vh;
+            overflow-y: auto;
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--text-secondary);
+            padding: 10px 0;
+        }
+        .detail-field { display: flex; margin-bottom: 8px; }
+        .detail-field label { font-weight: 600; min-width: 150px; color: var(--text-secondary); }
+        .detail-field span { color: var(--text-primary); }
+        .sum-display.ok { color: #15803d; }
+        .sum-display.err { color: #b91c1c; }
+        .btn-group { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+
+        .left-panel::-webkit-scrollbar { width: 4px; }
+        .left-panel::-webkit-scrollbar-thumb { background: var(--text-muted); border-radius: 4px; }
+        .left-panel::-webkit-scrollbar-track { background: transparent; }
+        .library-list {
+            flex: 1;             /* Список растягивается на всё оставшееся место */
+            min-height: 0;       /* ВАЖНО: позволяет прокрутке работать внутри flex-контейнера */
+            overflow-y: auto;    /* Прокрутка появляется только внутри списка */
+            display: flex;
+            flex-direction: column;
+            gap: 4px;            /* Меньше отступ между элементами */
+            padding-right: 4px;  /* Отступ для скроллбара */
+        }
+        .library-list::-webkit-scrollbar { width: 4px; }
+        .library-list::-webkit-scrollbar-thumb { background: var(--text-muted); border-radius: 4px; }
+        .library-list::-webkit-scrollbar-track { background: transparent; }
+
+
+        .name-input-group { display: flex; gap: 8px; align-items: center; }
+        .name-input-group input { flex: 1; }
+        .name-input-group .btn { flex-shrink: 0; height: 36px; padding: 0 14px; font-size: 13px; line-height: 36px; }
+
+        /* Переключение темы */
+        .theme-toggle {
+            background: none;
+            border: none;
+            font-size: 22px;
+            cursor: pointer;
+            line-height: 1;
+            padding: 0 8px;
+            color: var(--text-primary);
+            transition: transform 0.3s;
+        }
+        .theme-toggle:hover { transform: scale(1.2); }
+
+        /* Стили для дубликата симуляции в левой панели */
+        .sidebar-sim-controls {
+            margin-top: 16px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .sidebar-sim-controls .sim-btn-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2px;
+        }
+        .sidebar-sim-controls .btn-side {
+            width: 100%;
+            height: 28px;
+            font-size: 12px;
+            padding: 0 5px;
+            white-space: nowrap;
+        }
+        .sidebar-sim-controls .side-status {
+            text-align: center;
+            font-weight: 600;
+            font-size: 12px;
+            color: var(--text-primary);
+        }
+        /* Скрытие кнопки Симуляция */
+        #simToggleBtn {
+            display: none;
+        }
+        /* Выделение слова "свободен" */
+        .highlight-free {
+            color: #22c55e; /* Ярко-зеленый цвет */
+            font-weight: 700;
+            background-color: rgba(34, 197, 94, 0.15); /* Легкий зеленый фон */
+            padding: 0 4px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- ЛЕВАЯ ПАНЕЛЬ -->
+        <div class="left-panel">
+            <!-- <h3>1. Доли категорий (%)</h3> -->
+            <div class="btn-row">
+                <button class="btn btn-warning" id="equalizeBtn">Поровну</button>
+                <button class="btn btn-success" id="normalizeBtn">Выровнять до 100%</button>
+            </div>
+            <span class="sum-display" id="sumDisplay">Сумма: 0%</span>
+            <div class="category-props-grid" id="categoryPropsContainer"></div>
+
+            <div class="form-group">
+                <label>Кол-во компетенций</label>
+                <input type="number" id="genCount" value="250" min="1" max="10000">
+            </div>
+
+            <div class="form-group">
+                <label>Бизнес-модели (выберите несколько)</label>
+                <div class="model-checkboxes" id="modelCheckboxes"></div>
+            </div>
+
+            <div class="settings-actions">
+                <button class="btn btn-primary" id="generateBtn">🚀 Сгенерировать</button>
+            </div>
+            <div id="gauge-container" style="width: 100%; height: 110px; margin-top: 8px;"></div>
+
+            <div class="stats-block">
+                <div class="stat-item">
+                    <span class="label">Средний уровень:</span>
+                    <span class="value" id="avgLevelDisplay">0.0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="label">Шагов:</span>
+                    <span class="value" id="stepCounter">0</span>
+                </div>
+            </div>
+
+                        <!-- Дубликат панели симуляции -->
+            <div class="sidebar-sim-controls">
+                <label style="font-size: 12px; display: block; text-align: center;">Скорость:
+                    <input type="range" id="simSpeedSide" min="100" max="1000" value="500" style="width: 100px; vertical-align: middle;">
+                    <span id="speedLabelSide" style="font-weight: 400;">500</span> мс
+                </label>
+                <div class="sim-btn-row">
+                    <button class="btn btn-success btn-side" id="simStartBtnSide">▶️ Старт</button>
+                    <button class="btn btn-warning btn-side" id="simPauseBtnSide">⏸️ Пауза</button>
+                    <button class="btn btn-danger btn-side" id="simResetBtnSide">⏹️ Сброс</button>
+                    <button class="btn btn-info btn-side" id="balanceBtnSide">🔄 Баланс</button>
+                </div>
+                <!-- Добавьте эту строку -->
+                <span class="sim-status side-status" id="simStatusSide">⏹️ Остановлена</span>
+            </div>
+
+
+        </div>
+
+        <!-- ПРАВАЯ ОБЛАСТЬ -->
+        <div class="right-area">
+            <header>
+                <h1>🧊 Пространство компетенций (2D + 3D + Симуляция)</h1>
+                <div class="header-actions">
+                    <button class="btn btn-outline" id="themeToggle" title="Переключить тему">🌙</button>
+                    <button class="btn btn-primary" id="addCompetenceBtn">➕ Добавить</button>
+                    <button class="btn btn-warning" id="simToggleBtn">▶️ Симуляция</button>
+                    <button class="btn btn-outline" id="readmeBtn">📄 README</button>
+                </div>
+            </header>
+
+            <!-- Панель управления симуляцией -->
+            <div id="simControls" class="simulation-controls">
+                <button class="btn btn-success" id="simStartBtn">▶️ Старт</button>
+                <button class="btn btn-warning" id="simPauseBtn">⏸️ Пауза</button>
+                <button class="btn btn-danger" id="simResetBtn">⏹️ Сброс</button>
+                <button class="btn btn-info" id="balanceBtn">🔄 Балансировка</button>
+                <label>Скорость: <input type="range" id="simSpeed" min="100" max="1000" value="500"> <span id="speedLabel">500</span> мс</label>
+                <span class="sim-status" id="simStatus">⏹️ Остановлена</span>
+            </div>
+
+            <div class="main-grid">
+                <div class="chart-wrapper">
+                    <div id="ternary-plot" class="plot-container"></div>
+                </div>
+                <div class="chart-wrapper">
+                    <div id="scatter-plot" class="plot-container"></div>
+                </div>
+
+                <!-- Библиотека теперь справа от 3D диаграммы -->
+                <div class="library-block">
+                    <div class="header">
+                        <h4>📚 Библиотека конфигураций</h4>
+                        <button class="btn btn-secondary" id="saveLibraryBtn">💾 Сохранить текущую</button>
+                    </div>
+                    <div id="libraryList" class="library-list">
+                        <div class="empty-library">Нет сохранённых конфигураций</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="trend-container-full">
+                <div id="trend-plot" class="trend-plot"></div>
+            </div>
+
+             <div class="table-wrapper">
+                <div class="table-controls">
+                    <select id="categoryFilter"><option value="">Все категории</option></select>
+                    <input type="text" id="searchInput" placeholder="🔍 Поиск по названию...">
+                    <span class="total-cost" id="totalCostDisplay">💰 0 ₽</span>
+                </div>
+                <div class="table-scroll">
+                    <table id="competenceTable">
+                        <thead><tr>
+                            <th data-sort="name">Название ↕</th>
+                            <th data-sort="category">Категория ↕</th>
+                            <th data-sort="hours">Часы ↕</th>
+                            <th data-sort="master_level">Уровень ↕</th>
+                            <th data-sort="cost_hour">₽/час ↕</th>
+                            <th>Действия</th>
+                        </tr></thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модалки (без изменений) -->
+    <div class="modal-overlay" id="viewModal">
+        <div class="modal">
+            <button class="modal-close" id="closeViewModal">&times;</button>
+            <h2 id="viewModalTitle">Детали компетенции</h2>
+            <div id="viewContent"></div>
+            <div class="btn-group">
+                <button class="btn btn-outline" id="viewEditBtn">✏️ Редактировать</button>
+                <button class="btn btn-outline" id="closeViewBtn">Закрыть</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="editModal">
+        <div class="modal">
+            <button class="modal-close" id="closeEditModal">&times;</button>
+            <h2 id="editModalTitle">Добавление компетенции</h2>
+            <input type="hidden" id="editIndex" value="-1">
+            <div class="form-group">
+                <label>Название *</label>
+                <div class="name-input-group">
+                    <input type="text" id="editName" placeholder="Введите название">
+                    <button class="btn btn-outline" id="editChooseFromLibBtn">📂 Выбрать</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Категория *</label>
+                <select id="editCategory"></select>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>Ось X (Технологии)</label><input type="number" step="0.01" id="editAxis1" value="0.33"></div>
+                <div class="form-group"><label>Ось Y (Люди)</label><input type="number" step="0.01" id="editAxis2" value="0.33"></div>
+                <div class="form-group"><label>Ось Z (Системы)</label><input type="number" step="0.01" id="editAxis3" value="0.34"></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>Часы практики</label><input type="number" id="editHours" value="80"></div>
+                <div class="form-group"><label>Уровень</label><select id="editLevel"><option>Junior</option><option>Middle</option><option>Middle+</option><option>Senior</option></select></div>
+                <div class="form-group"><label>Стоимость часа (₽)</label><input type="number" id="editCost" value="1500"></div>
+            </div>
+            <div class="form-group"><label>Зоны ответственности (через запятую)</label><input type="text" id="editResponsibilities" placeholder="Например: Планирование, Отчётность"></div>
+            <div class="form-group"><label>Контактный email</label><input type="email" id="editContact" placeholder="email@example.com"></div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" id="cancelEdit">Отмена</button>
+                <button class="btn btn-primary" id="saveEdit">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay choose-modal" id="chooseModal">
+        <div class="modal">
+            <button class="modal-close" id="closeChooseModal">&times;</button>
+            <h2>Выбор компетенции из справочника</h2>
+            <div class="form-group">
+                <label>Категория</label>
+                <select id="chooseCategory"></select>
+            </div>
+            <div class="form-group">
+                <label>Название</label>
+                <select id="chooseName"></select>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" id="cancelChooseBtn">Отмена</button>
+                <button class="btn btn-primary" id="chooseBtn">Выбрать</button>
+            </div>
+        </div>
+    </div>
+        <!-- Модалка README -->
+    <div class="modal-overlay" id="readmeModal">
+        <div class="modal">
+            <button class="modal-close" id="closeReadmeModal">&times;</button>
+            <h2>📄 README</h2>
+            <div class="readme-content">
+                <!-- Вставьте сюда свой текст README -->
+                <h3>Интерактивное пространство компетенций</h3>
+                <p>Добро пожаловать! Данное приложение позволяет визуализировать компетенции в области построения по классификации: Системы/Регламенты - Люди/Коммуникации - Технологии/Объекты в 2D, 3D, запускать симуляцию их развития, а также сохранять конфигурации.</p>
+                <p><strong>Основные возможности:</strong></p>
+
+<i><p>**Дата:** 24-08-2026
+<i><p>**Версия:** 2.0 (2D + 3D + Симуляция + Библиотека + Мануальный конструктор)
+<i><p>Математика, Phyton, SQL, DWH, UI/UX, AI, ML
+<i><p>Шихов Евгений CDO <span class="highlight-free">свободен</span> +7 919 936 1919
+<i><p>---
+ <i><p>
+## 📌 Обзор </i></p>
+
+<i><p>Веб-приложение для визуализации, управления и симуляции компетенций сотрудников производственного предприятия. Теперь доступны два режима просмотра: **плоская тернарная диаграмма** (для анализа пропорций) и **интерактивная 3D-диаграмма** (для объёмного восприятия распределения). Встроена **симуляция «Жизнь процесса»**, где компетенции накапливают опыт, повышают уровень и стоимость. Добавлена **библиотека конфигураций** для сохранения и загрузки сценариев, а также **мануальный конструктор** – добавление компетенций через справочник.
+
+<i><p>Все данные хранятся в `localStorage`, изменения сохраняются между сессиями.
+
+<i><p>---
+ <i><p>
+## 🚀 Основные возможности </i></p>
+
+ <i><p>### 📊 Двойная визуализация </i></p>
+- **Тернарная диаграмма** – классическое треугольное представление (нормализованные координаты).
+- **3D-диаграмма (scatter3d)** – точки распределены по кубу, управление: вращение мышкой, зум колёсиком, наведение для подсказки.
+- Обе диаграммы синхронизированы с фильтрами и поиском.
+
+ <i><p>### 🧪 Симуляция «Жизнь процесса» </i></p>
+- На каждом шаге симуляции каждая компетенция получает **+1 час опыта**.
+- При достижении порогов (50, 100, 250, 500 часов) автоматически повышается уровень (Junior → Middle → Middle+ → Senior).
+- Стоимость часа пересчитывается с учётом нового уровня, категории и редкости.
+- **Стрелочный индикатор** общей стоимости (в левой панели) показывает текущую сумму, дельту и цветовую зону (зелёный – стабильно, жёлтый – тревожно, красный – перегрев).
+- **Три графика тренда** (средняя стоимость, средний уровень, количество) отображают динамику в реальном времени.
+
+ <i><p>### ⚖️ Балансировка </i></p>
+- Кнопка **«Балансировка»** анализирует текущее распределение по категориям, сравнивает с целевыми долями (из ползунков) и добавляет недостающие компетенции в дефицитные категории (по 10% от недостатка), ускоряя процесс и предотвращая простои.
+ <i><p>### 📚 Библиотека конфигураций </i></p>
+- Сохраняйте текущий набор компетенций вместе с долями категорий под любым именем.
+- Загружайте ранее сохранённые конфигурации – они заменяют текущие данные и настройки.
+- Удаляйте ненужные конфигурации.
+- Все конфигурации хранятся в `localStorage` и доступны после перезагрузки страницы.
+
+ <i><p>### 🛠 Мануальный конструктор (правый клик) </i></p>
+- **Правый клик по точке** на диаграмме → контекстное меню:
+  - Редактировать (открывает карточку компетенции)
+  - Удалить (с подтверждением)
+- **Правый клик по пустому месту** → открывается модалка выбора из справочника (категория + название). После выбора открывается карточка редактирования с предзаполненными полями.
+- В карточке добавления/редактирования появилась кнопка **«📂 Выбрать»** рядом с полем «Название» – она открывает тот же справочник, но с привязкой к текущей категории.
+
+ <i><p>### ⚙️ Генерация компетенций </i></p>
+- **Левая панель** содержит все настройки: доли категорий (ползунки), количество компетенций, выбор бизнес-моделей.
+- Кнопки **«Общага»** (равномерное распределение) и **«Выровнять до 100%»** (пропорциональная нормализация).
+- При генерации новые компетенции получают осмысленные названия, зоны ответственности, расчётную стоимость и случайные координаты в кубе.
+
+ <i><p>### 📋 Таблица компетенций </i></p>
+- Все поля: название, категория, часы, уровень, стоимость/час.
+- Сортировка по любому столбцу.
+- Фильтрация по категории и поиск по названию.
+- Общая стоимость отображаемых записей (с учётом фильтров).
+
+---
+
+ <i><p>## 🛠 Технологии </i></p>
+
+- **Plotly.js** – 2D (scatterternary) и 3D (scatter3d) диаграммы, а также gauge-индикатор и графики тренда.
+- **Чистый HTML, CSS, JavaScript** – интерфейс и логика.
+- **localStorage** – хранение данных компетенций и библиотеки конфигураций.
+
+---
+
+ <i><p>## 📂 Структура данных </i></p>
+
+Каждая компетенция описывается объектом:
+
+<i><p>| Поле | Тип | Описание |
+<i><p>|------|-----|----------|
+<i><p>| `name` | string | Название компетенции |
+<i><p>| `category` | string | Одна из 13 категорий |
+<i><p>| `axis1` | number | Координата X (Технологии) – 0..1 |
+<i><p>| `axis2` | number | Координата Y (Люди) – 0..1 |
+<i><p>| `axis3` | number | Координата Z (Системы) – 0..1 |
+<i><p>| `hours` | number | Часы практики (накапливаются в симуляции) |
+<i><p>| `master_level` | string | Уровень: Junior, Middle, Middle+, Senior |
+<i><p>| `cost_hour` | number | Стоимость часа в рублях |
+<i><p>| `responsibilities` | array | Зоны ответственности (строки) |
+<i><p>| `contact` | string | Контактный email |
+<i><p>| `projects` | array | (опционально) Проекты |
+<i><p>| `presentation` | string | (опционально) Ссылка на презентацию |
+<i><p>
+<i><p>**Библиотека конфигураций** хранит:
+- `name` – название конфигурации
+- `competencies` – массив объектов компетенций
+- `weights` – объект с долями категорий (в процентах)
+- `savedAt` – временная метка
+
+---
+
+<i><p>## 🚀 Как использовать
+
+<i><p>### Запуск
+<i><p>1. Скачайте файл `index.html`.
+<i><p>2. Откройте его в современном браузере (рекомендуется Live Server или `python -m http.server`).
+<i><p>3. Все данные загружаются из `localStorage`; при первом запуске создаются демонстрационные записи.
+<i><p>
+<i><p>### Управление диаграммами
+- **Наведение** – подсказка с названием, категорией, часами и стоимостью.
+- **Клик левой кнопкой** по точке – открывает карточку просмотра/редактирования.
+- **Правый клик** – контекстное меню (см. выше).
+<i><p>
+<i><p>### Симуляция
+- Нажмите **«▶️ Симуляция»** в правом верхнем углу, чтобы открыть панель управления.
+- Кнопки: **«Старт»**, **«Пауза»**, **«Сброс»**.
+- Регулируйте скорость (100–1000 мс между шагами).
+- **Стрелочный индикатор** в левой панели показывает общую стоимость и её изменение.
+- **Графики тренда** обновляются в реальном времени.
+<i><p>
+<i><p>### Библиотека конфигураций
+- **«💾 Сохранить текущую»** – введите название, и текущий набор (компетенции + доли) будет сохранён.
+- В списке библиотеки каждая запись имеет кнопки **📂** (загрузить) и **🗑️** (удалить).
+- Загрузка заменяет текущие данные и доли, автоматически сбрасывая симуляцию.
+<i><p>
+<i><p>### Мануальный конструктор
+- **Правый клик по точке** – редактировать или удалить.
+- **Правый клик по пустому месту** – выбрать из справочника, затем редактировать.
+- В карточке добавления/редактирования кнопка **«📂 Выбрать»** рядом с полем «Название» позволяет выбрать компетенцию из справочника (с привязкой к выбранной категории).
+<i><p>
+<i><p>### Генерация и настройка
+- В левой панели настройте доли категорий (ползунки), количество компетенций и выберите бизнес-модели.
+- Нажмите **«🚀 Сгенерировать»** – текущие данные будут заменены новым набором, фильтры и поиск сбросятся.
+
+<i><p>---
+<i><p>
+<i><p>## 💡 Заметки для разработчиков
+
+- **Хранилище**: все изменения сохраняются в `localStorage` под ключами `my_custom_competencies` (данные) и `competence_library` (библиотека).
+- **Генерация**: использует словари `CATEGORY_NAMES_MAP` (названия по категориям) и `FALLBACK_RESPONSIBILITIES` (обязанности).
+- **Расчёт стоимости**: функция `calculateCost` учитывает уровень, категорию, редкость (ключевые слова в названии) и округляет до 50 рублей.
+- **Нормализация для тернарной диаграммы** выполняется на лету, в данных хранятся сырые координаты.
+- **3D-диаграмма** отображает координаты без нормализации, что даёт равномерное заполнение куба.
+- **Симуляция**: добавляет +1 час к каждой компетенции на каждом шаге, повышает уровень при достижении порогов, пересчитывает стоимость.
+- **Индикатор** автоматически адаптирует шкалу под текущий максимум.
+
+---
+
+<i><p>## 📄 Лицензия
+
+<i><p>Проект предоставляется как демонстрационный. Вы можете свободно использовать и модифицировать его для своих нужд.
+                </i></p>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-outline" id="closeReadmeBtn">Закрыть</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ----------------------------------------------------------------------
+        // 1. КОНСТАНТЫ (без изменений)
+        // ----------------------------------------------------------------------
+        const CATEGORY_LIST = [
+            "Топ-менеджмент", "Хозчасть", "Безопасность", "Основные фонды",
+            "Склады", "Логистика", "Закупки", "План производства",
+            "Продажи", "Финансовый портфель", "Персонал", "Администрация",
+            "Автоматизация"
+        ];
+
+        const CATEGORY_COLORS = {
+            "Топ-менеджмент": "#e6194B",
+            "Хозчасть": "#3cb44b",
+            "Безопасность": "#ffe119",
+            "Основные фонды": "#4363d8",
+            "Склады": "#f58231",
+            "Логистика": "#911eb4",
+            "Закупки": "#42d4f4",
+            "План производства": "#f032e6",
+            "Продажи": "#bfef45",
+            "Финансовый портфель": "#fabed4",
+            "Персонал": "#469990",
+            "Администрация": "#dcbeff",
+            "Автоматизация": "#9A6324"
+        };
+
+        const CATEGORY_AXIS_MAP = {
+            "Топ-менеджмент": { a1: 0.2, a2: 0.7, a3: 0.1 },
+            "Хозчасть": { a1: 0.2, a2: 0.2, a3: 0.6 },
+            "Безопасность": { a1: 0.2, a2: 0.1, a3: 0.7 },
+            "Основные фонды": { a1: 0.7, a2: 0.2, a3: 0.1 },
+            "Склады": { a1: 0.2, a2: 0.3, a3: 0.5 },
+            "Логистика": { a1: 0.2, a2: 0.3, a3: 0.5 },
+            "Закупки": { a1: 0.3, a2: 0.4, a3: 0.3 },
+            "План производства": { a1: 0.7, a2: 0.2, a3: 0.1 },
+            "Продажи": { a1: 0.2, a2: 0.7, a3: 0.1 },
+            "Финансовый портфель": { a1: 0.4, a2: 0.3, a3: 0.3 },
+            "Персонал": { a1: 0.2, a2: 0.7, a3: 0.1 },
+            "Администрация": { a1: 0.3, a2: 0.4, a3: 0.3 },
+            "Автоматизация": { a1: 0.7, a2: 0.2, a3: 0.1 }
+        };
+
+                // Бонусы к долям категорий от бизнес-моделей
+        const MODEL_BONUSES = {
+            "E-Com": { "Продажи": 10, "Закупки": 5, "Логистика": 5 },
+            "SaaS": { "Автоматизация": 15, "Продажи": 5 },
+            "Производство": { "План производства": 15, "Основные фонды": 5, "Хозчасть": 5 },
+            "Логистика": { "Логистика": 15, "Склады": 5, "Закупки": 5 },
+            "Образование": { "Персонал": 10, "Администрация": 5 },
+            "Здравоохранение": { "Безопасность": 10, "Персонал": 10 },
+            "Финансы": { "Финансовый портфель": 15, "Топ-менеджмент": 5 },
+            "Консалтинг": { "Топ-менеджмент": 10, "Финансовый портфель": 5 },
+            "Агро": { "Основные фонды": 10, "Хозчасть": 5 },
+            "Энергетика": { "Безопасность": 10, "Основные фонды": 10 }
+        };
+
+        const CATEGORY_NAMES_MAP = {
+            "Топ-менеджмент": ["Стратегическое планирование", "Управление изменениями", "Корпоративное управление", "Бизнес-стратегия", "Организационное развитие", "Управление эффективностью", "Риск-менеджмент", "Инвестиционный анализ", "Управление портфелем проектов"],
+            "Хозчасть": ["Управление недвижимостью", "Эксплуатация зданий", "Материально-техническое обеспечение", "Хозяйственное обслуживание", "Управление инфраструктурой", "Охрана труда", "Пожарная безопасность", "Энергоснабжение", "Управление транспортом"],
+            "Безопасность": ["Информационная безопасность", "Физическая безопасность", "Корпоративная безопасность", "Кибербезопасность", "Защита персональных данных", "Антифрод", "Безопасность труда", "Экологическая безопасность", "Управление инцидентами"],
+            "Основные фонды": ["Управление оборудованием", "Техническое обслуживание", "Ремонтный менеджмент", "Модернизация основных средств", "Амортизационная политика", "Инвентаризация ОС", "Управление жизненным циклом", "Оценка активов", "Капитальное строительство"],
+            "Склады": ["Складская логистика", "Управление запасами", "Комплектация заказов", "Приёмка товара", "Инвентаризация склада", "Складской учёт", "Управление поставщиками", "Транспортная логистика", "Оптимизация складских процессов"],
+            "Логистика": ["Управление цепями поставок", "Транспортная логистика", "Складская логистика", "Таможенное оформление", "Управление доставкой", "Оптимизация маршрутов", "Управление складами", "Закупочная логистика", "Распределительный центр"],
+            "Закупки": ["Управление закупками", "Работа с поставщиками", "Контрактная работа", "Тендерные процедуры", "Анализ рынка закупок", "Управление бюджетом закупок", "Снабжение", "Оптимизация закупок", "ВЭД"],
+            "План производства": ["Производственное планирование", "Управление производством", "Операционное планирование", "Составление графиков", "Производственный учёт", "Нормирование труда", "Управление качеством на производстве", "Производственная безопасность", "Технологическая подготовка"],
+            "Продажи": ["Управление продажами", "Развитие клиентской базы", "Активные продажи", "Ключевые клиенты", "Сопровождение сделок", "Анализ продаж", "Управление каналами сбыта", "Послепродажное обслуживание", "Коммерческое предложение"],
+            "Финансовый портфель": ["Финансовый анализ", "Бюджетирование", "Управление денежными потоками", "Инвестиционный анализ", "Финансовое моделирование", "Управление рисками", "Отчётность по МСФО", "Налоговое планирование", "Управление активами"],
+            "Персонал": ["Рекрутинг и подбор", "Обучение и развитие", "Оценка персонала", "Кадровое делопроизводство", "Мотивация и компенсации", "Управление талантами", "Организационная культура", "Внутренние коммуникации", "HR-брендинг"],
+            "Администрация": ["Офис-менеджмент", "Документооборот", "Организация мероприятий", "Управление расписанием", "Внутренние регламенты", "Административная поддержка", "Взаимодействие с госорганами", "Юридическое сопровождение", "Управление контрактами"],
+            "Автоматизация": ["Разработка ПО", "Внедрение ERP", "Автоматизация бизнес-процессов", "Управление IT-инфраструктурой", "Разработка веб-приложений", "Интеграция систем", "Роботизация", "Data Science", "Цифровая трансформация"]
+        };
+        const FALLBACK_NAMES = ["Управление проектами", "Бизнес-анализ", "Контроллинг", "Методология", "Управление качеством", "Инновационная деятельность", "Управление знаниями", "Организационное проектирование", "Бенчмаркинг", "Корпоративное обучение"];
+
+        const FALLBACK_RESPONSIBILITIES = {
+            "Топ-менеджмент": ["Стратегическое управление", "Бизнес-планирование", "Управление командой", "Принятие решений"],
+            "Хозчасть": ["Организация работ", "Контроль ресурсов", "Взаимодействие с подрядчиками", "Составление смет"],
+            "Безопасность": ["Обеспечение безопасности", "Проведение проверок", "Инструктажи", "Реагирование на угрозы"],
+            "Основные фонды": ["Управление активами", "Планирование ТО", "Учет основных средств", "Контроль использования"],
+            "Склады": ["Организация складских процессов", "Учет товаров", "Инвентаризация", "Оптимизация"],
+            "Логистика": ["Планирование перевозок", "Управление доставкой", "Таможня", "Контроль сроков"],
+            "Закупки": ["Ведение закупочной деятельности", "Работа с поставщиками", "Контроль бюджета", "Договорная работа"],
+            "План производства": ["Производственное планирование", "Управление производством", "Контроль качества", "Нормирование"],
+            "Продажи": ["Управление продажами", "Работа с клиентами", "Аналитика продаж", "Переговоры"],
+            "Финансовый портфель": ["Финансовый анализ", "Бюджетирование", "Управление рисками", "Отчетность"],
+            "Персонал": ["Управление персоналом", "Рекрутинг", "Обучение", "Кадровое делопроизводство"],
+            "Администрация": ["Административное обеспечение", "Документооборот", "Организация мероприятий", "Юридическая поддержка"],
+            "Автоматизация": ["Разработка ПО", "Внедрение IT-решений", "Интеграция систем", "Управление инфраструктурой"]
+        };
+
+        // ----------------------------------------------------------------------
+        // 2. ФУНКЦИЯ РАСЧЁТА СТОИМОСТИ (без изменений)
+        // ----------------------------------------------------------------------
+        function calculateCost(category, level, name) {
+            const baseRates = { "Junior": 900, "Middle": 1600, "Middle+": 2400, "Senior": 3500 };
+            let base = baseRates[level] || 1600;
+            const axis = CATEGORY_AXIS_MAP[category];
+            let group = "Системы";
+            if (axis) {
+                if (axis.a1 > axis.a2 && axis.a1 > axis.a3) group = "Технологии";
+                else if (axis.a2 > axis.a1 && axis.a2 > axis.a3) group = "Люди";
+                else group = "Системы";
+            }
+            let factor = 1.0;
+            const extraFactors = {
+                "Топ-менеджмент": 1.4, "Безопасность": 1.3, "Финансовый портфель": 1.25,
+                "Продажи": 1.2, "Автоматизация": 1.3, "План производства": 1.15,
+                "Логистика": 1.1, "Закупки": 1.1, "Персонал": 1.0,
+                "Администрация": 0.9, "Основные фонды": 0.95, "Склады": 0.9, "Хозчасть": 0.85
+            };
+            if (extraFactors[category]) factor *= extraFactors[category];
+            else if (group === "Технологии") factor *= 1.2;
+            else if (group === "Люди") factor *= 1.0;
+            else factor *= 0.9;
+            const rareKeywords = ["риск", "безопасность", "инновации", "Data Science", "ИИ", "ML", "роботизация", "цифровая"];
+            let rarityBonus = 1.0;
+            const lowerName = name.toLowerCase();
+            for (let kw of rareKeywords) {
+                if (lowerName.includes(kw.toLowerCase())) { rarityBonus += 0.15; break; }
+            }
+            let cost = base * factor * rarityBonus;
+            cost = Math.ceil(cost / 50) * 50;
+            cost = Math.min(Math.max(cost, 500), 7000);
+            return cost;
+        }
+
+        // ----------------------------------------------------------------------
+        // 3. ДАННЫЕ И ХРАНИЛИЩЕ (без изменений)
+        // ----------------------------------------------------------------------
+        const INITIAL_DATA = [
+            { name: "Управление проектами", category: "Топ-менеджмент", axis1: 0.2, axis2: 0.7, axis3: 0.1, hours: 120, master_level: "Senior", cost_hour: 3500, responsibilities: ["Планирование", "Контроль сроков"], contact: "pm@enterprise.ru", projects: [], presentation: "" },
+            { name: "Разработка ПО", category: "Автоматизация", axis1: 0.7, axis2: 0.2, axis3: 0.1, hours: 200, master_level: "Middle+", cost_hour: 2800, responsibilities: ["Написание кода", "Code review"], contact: "dev@enterprise.ru", projects: [], presentation: "" },
+            { name: "Администрирование систем", category: "Хозчасть", axis1: 0.2, axis2: 0.2, axis3: 0.6, hours: 150, master_level: "Middle", cost_hour: 2200, responsibilities: ["Настройка серверов", "Мониторинг"], contact: "sysadmin@enterprise.ru", projects: [], presentation: "" },
+            { name: "Бизнес-анализ", category: "Финансовый портфель", axis1: 0.4, axis2: 0.3, axis3: 0.3, hours: 90, master_level: "Middle+", cost_hour: 2600, responsibilities: ["Сбор требований", "Анализ"], contact: "ba@enterprise.ru", projects: [], presentation: "" },
+            { name: "Маркетинг", category: "Продажи", axis1: 0.2, axis2: 0.7, axis3: 0.1, hours: 70, master_level: "Junior", cost_hour: 1200, responsibilities: ["Продвижение", "Соцсети"], contact: "marketing@enterprise.ru", projects: [], presentation: "" },
+            { name: "Логистика", category: "Логистика", axis1: 0.2, axis2: 0.3, axis3: 0.5, hours: 110, master_level: "Middle", cost_hour: 1900, responsibilities: ["Управление поставками", "Склад"], contact: "log@enterprise.ru", projects: [], presentation: "" },
+            { name: "Управление качеством", category: "Безопасность", axis1: 0.2, axis2: 0.1, axis3: 0.7, hours: 100, master_level: "Middle", cost_hour: 2100, responsibilities: ["Аудиты", "Стандарты"], contact: "qa@enterprise.ru", projects: [], presentation: "" },
+            { name: "HR-менеджмент", category: "Персонал", axis1: 0.2, axis2: 0.7, axis3: 0.1, hours: 80, master_level: "Middle+", cost_hour: 2400, responsibilities: ["Рекрутинг", "Оценка"], contact: "hr@enterprise.ru", projects: [], presentation: "" }
+        ];
+
+        const STORAGE_KEY = 'my_custom_competencies';
+        function loadData() {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            if (stored) {
+                try { return JSON.parse(stored); } catch (e) { /* fallback */ }
+            }
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_DATA));
+            return INITIAL_DATA;
+        }
+        function saveData(data) { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+        let competencies = loadData();
+
+        // ----------------------------------------------------------------------
+        // 4. ВСПОМОГАТЕЛЬНЫЕ
+        // ----------------------------------------------------------------------
+        function getCategoryColor(cat) { return CATEGORY_COLORS[cat] || '#7f7f7f'; }
+        function normalizeForTernary(a1, a2, a3) {
+            const sum = a1 + a2 + a3;
+            if (sum === 0) return [0.33, 0.33, 0.34];
+            return [a1 / sum, a2 / sum, a3 / sum];
+        }
+
+        // ----------------------------------------------------------------------
+        // 5. ФИЛЬТРАЦИЯ И СОРТИРОВКА
+        // ----------------------------------------------------------------------
+        let currentFilter = '',
+            currentSearch = '',
+            sortKey = 'name',
+            sortAsc = true;
+
+        function getFilteredData() {
+            let filtered = competencies.slice();
+            if (currentFilter) filtered = filtered.filter(d => d.category === currentFilter);
+            if (currentSearch.trim()) {
+                const s = currentSearch.trim().toLowerCase();
+                filtered = filtered.filter(d => d.name.toLowerCase().includes(s));
+            }
+            filtered.sort((a, b) => {
+                let va = a[sortKey] ?? '',
+                    vb = b[sortKey] ?? '';
+                if (typeof va === 'string') va = va.toLowerCase();
+                if (typeof vb === 'string') vb = vb.toLowerCase();
+                if (va < vb) return sortAsc ? -1 : 1;
+                if (va > vb) return sortAsc ? 1 : -1;
+                return 0;
+            });
+            return filtered;
+        }
+
+        // ----------------------------------------------------------------------
+        // 6. ОТРИСОВКА ДИАГРАММ (с учётом темы)
+        // ----------------------------------------------------------------------
+        function getPlotBgColor() {
+            return document.body.classList.contains('dark-mode') ? '#1e293b' : '#fafcff';
+        }
+
+        function renderTernaryChart(data) {
+            const a = data.map(d => d.axis1);
+            const b = data.map(d => d.axis2);
+            const c = data.map(d => d.axis3);
+            const norm = data.map((d, i) => normalizeForTernary(a[i], b[i], c[i]));
+            const trace = {
+                type: 'scatterternary',
+                mode: 'markers',
+                a: norm.map(n => n[0]),
+                b: norm.map(n => n[1]),
+                c: norm.map(n => n[2]),
+                text: data.map(d => `${d.name}<br>Категория: ${d.category}<br>Часы: ${d.hours}<br>₽/час: ${d.cost_hour}`),
+                hoverinfo: 'text',
+                marker: {
+                    size: data.map(d => Math.sqrt(d.cost_hour) * 1.2 + 5),
+                    color: data.map(d => getCategoryColor(d.category)),
+                    line: { width: 1, color: '#fff' },
+                    sizemode: 'area'
+                },
+                customdata: data.map((_, i) => i),
+            };
+            const bg = getPlotBgColor();
+            const layout = {
+                ternary: {
+                    sum: 1,
+                    aaxis: { title: 'Технологии / Объекты', min: 0, tickformat: '.0%' },
+                    baxis: { title: 'Люди / Коммуникации', min: 0, tickformat: '.0%' },
+                    caxis: { title: 'Системы / Регламенты', min: 0, tickformat: '.0%' },
+                },
+                margin: { l: 50, r: 50, t: 30, b: 50 },
+                hovermode: 'closest',
+                showlegend: false,
+                plot_bgcolor: bg,
+                paper_bgcolor: bg,
+                clickmode: 'event',
+            };
+            Plotly.react('ternary-plot', [trace], layout, { responsive: true });
+        }
+
+        let simRunning = false;
+        let simPaused = false;
+        let simInterval = null;
+        let simDataHistory = [];
+        let totalSteps = 0;
+
+        let previousTotalCost = 0;
+        let maxTotalCost = 100000;
+
+        function renderGauge(totalCost) {
+            if (!simRunning && totalCost === 0) {
+                Plotly.react('gauge-container', [], {});
+                return;
+            }
+            if (totalCost > maxTotalCost * 0.8) {
+                maxTotalCost = totalCost * 1.5;
+            }
+            const isDark = document.body.classList.contains('dark-mode');
+            const bg = isDark ? '#1e293b' : '#fafcff';
+            const data = [{
+                type: "indicator",
+                mode: "gauge+number+delta",
+                value: totalCost,
+                title: { text: "Общая стоимость", font: { color: isDark ? '#f1f5f9' : '#1e293b' } },
+                delta: { reference: previousTotalCost, valueformat: '.0f', font: { color: isDark ? '#f1f5f9' : '#1e293b' } },
+                gauge: {
+                    axis: { range: [0, maxTotalCost], tickformat: '.0f', tickfont: { color: isDark ? '#f1f5f9' : '#1e293b' } },
+                    bar: { color: isDark ? '#60a5fa' : 'darkblue' },
+                    steps: [
+                        { range: [0, maxTotalCost * 0.4], color: isDark ? '#22c55e' : 'lightgreen' },
+                        { range: [maxTotalCost * 0.4, maxTotalCost * 0.7], color: isDark ? '#eab308' : 'gold' },
+                        { range: [maxTotalCost * 0.7, maxTotalCost], color: isDark ? '#ef4444' : 'salmon' }
+                    ],
+                    bgcolor: bg,
+                }
+            }];
+            const layout = { width: 240, height: 120, margin: { t: 10, b: 10, l: 10, r: 10 }, paper_bgcolor: bg };
+            Plotly.react('gauge-container', data, layout);
+            previousTotalCost = totalCost;
+        }
+
+        function render3DChart(data, animate = false) {
+            const x = data.map(d => d.axis1);
+            const y = data.map(d => d.axis2);
+            const z = data.map(d => d.axis3);
+
+            let sizes, opacities;
+            if (animate && simRunning) {
+                sizes = data.map(() => Math.random() * 10 + 4);
+                opacities = data.map(() => Math.random() * 0.7 + 0.3);
+            } else {
+                sizes = data.map(d => Math.sqrt(d.cost_hour) * 0.8 + 4);
+                opacities = data.map(() => 0.8);
+            }
+            const bg = getPlotBgColor();
+            // Цвета для осей и сетки в зависимости от темы
+            const isDark = document.body.classList.contains('dark-mode');
+            const textColor = isDark ? '#f1f5f9' : '#1e293b';
+            const gridColor = isDark ? '#475569' : '#d0d7de';
+
+            const trace = {
+                type: 'scatter3d',
+                mode: 'markers',
+                x: x,
+                y: y,
+                z: z,
+                text: data.map(d => `${d.name}<br>Категория: ${d.category}<br>Часы: ${d.hours}<br>₽/час: ${d.cost_hour}`),
+                hoverinfo: 'text',
+                marker: {
+                    size: sizes,
+                    color: data.map(d => getCategoryColor(d.category)),
+                    opacity: opacities,
+                    line: { width: 0.5, color: '#fff' }
+                },
+                customdata: data.map((_, i) => i),
+            };
+
+            const layout = {
+                scene: {
+                    xaxis: {
+                        title: 'Технологии / Объекты',
+                        range: [0, 1],
+                        color: textColor,
+                        titlefont: { color: textColor },
+                        gridcolor: gridColor,
+                        showgrid: true,
+                        zerolinecolor: gridColor,
+                        showticklabels: true,
+                        tickfont: { color: textColor }
+                    },
+                    yaxis: {
+                        title: 'Люди / Коммуникации',
+                        range: [0, 1],
+                        color: textColor,
+                        titlefont: { color: textColor },
+                        gridcolor: gridColor,
+                        showgrid: true,
+                        zerolinecolor: gridColor,
+                        showticklabels: true,
+                        tickfont: { color: textColor }
+                    },
+                    zaxis: {
+                        title: 'Системы / Регламенты',
+                        range: [0, 1],
+                        color: textColor,
+                        titlefont: { color: textColor },
+                        gridcolor: gridColor,
+                        showgrid: true,
+                        zerolinecolor: gridColor,
+                        showticklabels: true,
+                        tickfont: { color: textColor }
+                    },
+                    camera: { eye: { x: 1.5, y: 1.5, z: 1.5 } },
+                    bgcolor: bg,
+                },
+                margin: { l: 0, r: 0, t: 0, b: 0 },
+                hovermode: 'closest',
+                plot_bgcolor: bg,
+                paper_bgcolor: bg,
+                clickmode: 'event',
+            };
+            Plotly.react('scatter-plot', [trace], layout, { responsive: true });
+        }
+
+        // Обработчик клика для обеих диаграмм (левая кнопка)
+                function handlePlotClick(data) {
+            if (data.points && data.points.length) {
+                const idx = data.points[0].customdata;
+                const filtered = getFilteredData();
+                if (idx !== undefined && idx < filtered.length) {
+                    const item = filtered[idx];
+                    const realIdx = competencies.indexOf(item);
+                    if (realIdx !== -1) openEditModal(realIdx); // <-- Изменено здесь (было openViewModal)
+                }
+            }
+        }
+
+        // ----------------------------------------------------------------------
+        // 7. ТАБЛИЦА (без изменений)
+        // ----------------------------------------------------------------------
+        function renderTable() {
+            const filtered = getFilteredData();
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+            filtered.forEach((d, idx) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${d.name}</strong></td>
+                    <td><span class="badge" style="background:${getCategoryColor(d.category)}30;color:${getCategoryColor(d.category)}">${d.category}</span></td>
+                    <td>${d.hours}</td>
+                    <td>${d.master_level}</td>
+                    <td>${d.cost_hour}</td>
+                    <td class="actions-cell">
+                        <button data-action="view" data-idx="${idx}" title="Просмотр">👁️</button>
+                        <button data-action="edit" data-idx="${idx}" title="Редактировать">✏️</button>
+                        <button data-action="delete" data-idx="${idx}" title="Удалить">🗑️</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            const total = filtered.reduce((sum, d) => sum + (d.cost_hour || 0), 0);
+            document.getElementById('totalCostDisplay').textContent = `💰 ${total.toLocaleString()} ₽`;
+
+            const catFilter = document.getElementById('categoryFilter');
+            const currentVal = catFilter.value;
+            const cats = [...new Set(competencies.map(d => d.category))];
+            catFilter.innerHTML = '<option value="">Все категории</option>' +
+                cats.map(c => `<option value="${c}" ${c === currentVal ? 'selected' : ''}>${c}</option>`).join('');
+            if (currentVal) catFilter.value = currentVal;
+
+            document.querySelectorAll('[data-action="view"]').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const idx = parseInt(this.dataset.idx);
+                    const filteredData = getFilteredData();
+                    if (idx >= 0 && idx < filteredData.length) {
+                        const item = filteredData[idx];
+                        const realIdx = competencies.indexOf(item);
+                        if (realIdx !== -1) openViewModal(realIdx);
+                    }
+                });
+            });
+            document.querySelectorAll('[data-action="edit"]').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const idx = parseInt(this.dataset.idx);
+                    const filteredData = getFilteredData();
+                    if (idx >= 0 && idx < filteredData.length) {
+                        const item = filteredData[idx];
+                        const realIdx = competencies.indexOf(item);
+                        if (realIdx !== -1) openEditModal(realIdx);
+                    }
+                });
+            });
+            document.querySelectorAll('[data-action="delete"]').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const idx = parseInt(this.dataset.idx);
+                    const filteredData = getFilteredData();
+                    if (idx >= 0 && idx < filteredData.length) {
+                        const item = filteredData[idx];
+                        const realIdx = competencies.indexOf(item);
+                        if (realIdx !== -1 && confirm(`Удалить компетенцию "${item.name}"?`)) {
+                            competencies.splice(realIdx, 1);
+                            saveData(competencies);
+                            refreshAll();
+                        }
+                    }
+                });
+            });
+
+            document.querySelectorAll('#competenceTable thead th[data-sort]').forEach(th => {
+                th.style.cursor = 'pointer';
+                th.addEventListener('click', function() {
+                    const key = this.dataset.sort;
+                    if (sortKey === key) sortAsc = !sortAsc;
+                    else { sortKey = key;
+                        sortAsc = true; }
+                    renderTable();
+                    document.querySelectorAll('#competenceTable thead th').forEach(h => h.textContent = h.textContent.replace(/[↕↑↓]/g, '').trim());
+                    this.textContent += sortAsc ? ' ↑' : ' ↓';
+                    refreshAll();
+                });
+            });
+        }
+
+        // ----------------------------------------------------------------------
+        // 8. ГРАФИК ТРЕНДА (с учётом темы)
+        // ----------------------------------------------------------------------
+        function renderTrendCharts() {
+            const isDark = document.body.classList.contains('dark-mode');
+            const bg = isDark ? '#1e293b' : '#fafcff';
+            const textColor = isDark ? '#f1f5f9' : '#1e293b';
+            const trace1 = {
+                x: simDataHistory.map((_, i) => i),
+                y: simDataHistory.map(d => d.avgCost),
+                type: 'scatter',
+                mode: 'lines+markers',
+                line: { color: '#1f77b4' },
+                name: 'Средняя стоимость, ₽'
+            };
+            const trace2 = {
+                x: simDataHistory.map((_, i) => i),
+                y: simDataHistory.map(d => d.avgLevel),
+                type: 'scatter',
+                mode: 'lines+markers',
+                line: { color: '#ff7f0e' },
+                name: 'Средний уровень',
+                yaxis: 'y2'
+            };
+            const trace3 = {
+                x: simDataHistory.map((_, i) => i),
+                y: simDataHistory.map(d => d.count),
+                type: 'scatter',
+                mode: 'lines+markers',
+                line: { color: '#2ca02c' },
+                name: 'Количество',
+                yaxis: 'y3'
+            };
+
+            const layout = {
+                margin: { l: 60, r: 60, t: 30, b: 40 },
+                hovermode: 'closest',
+                legend: { orientation: 'h', y: 1.1, font: { color: textColor } },
+                yaxis: { title: 'Стоимость, ₽', side: 'left', color: textColor, titlefont: { color: textColor } },
+                yaxis2: { title: 'Уровень', overlaying: 'y', side: 'right', color: textColor, titlefont: { color: textColor } },
+                yaxis3: { title: 'Кол-во', overlaying: 'y', side: 'right', position: 0.95, color: textColor, titlefont: { color: textColor } },
+                plot_bgcolor: bg,
+                paper_bgcolor: bg,
+                font: { color: textColor }
+            };
+
+            Plotly.react('trend-plot', [trace1, trace2, trace3], layout, { responsive: true });
+        }
+
+        // ----------------------------------------------------------------------
+        // 9. БИБЛИОТЕКА (без изменений)
+        // ----------------------------------------------------------------------
+        const LIBRARY_KEY = 'competence_library';
+
+        function getLibrary() {
+            const stored = localStorage.getItem(LIBRARY_KEY);
+            if (stored) {
+                try { return JSON.parse(stored); } catch (e) { return []; }
+            }
+            return [];
+        }
+
+        function saveLibrary(library) {
+            localStorage.setItem(LIBRARY_KEY, JSON.stringify(library));
+        }
+
+        function renderLibrary() {
+            const library = getLibrary();
+            const container = document.getElementById('libraryList');
+            if (library.length === 0) {
+                container.innerHTML = '<div class="empty-library">Нет сохранённых конфигураций</div>';
+                return;
+            }
+            let html = '';
+            library.forEach((item, index) => {
+                const date = new Date(item.savedAt).toLocaleString();
+                const count = item.competencies ? item.competencies.length : 0;
+                html += `
+                    <div class="library-item">
+                        <div class="info" data-index="${index}" title="Загрузить конфигурацию" style="cursor: pointer; flex: 1;">
+                            <span class="name">${item.name}</span>
+                            <span class="meta">${count} комп., ${date}</span>
+                        </div>
+                        <div class="actions">
+                            <button class="btn btn-success load-lib" data-index="${index}" title="Загрузить">📂</button>
+                            <button class="btn btn-danger delete-lib" data-index="${index}" title="Удалить">🗑️</button>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+
+                        // Клик по тексту (название/дата) в строке - Загрузить
+            container.querySelectorAll('.info').forEach(info => {
+                info.addEventListener('click', function() {
+                    const idx = parseInt(this.dataset.index);
+                    loadLibraryConfig(idx);
+                });
+            });
+
+            // Клик по иконке загрузки - по-прежнему работает
+            container.querySelectorAll('.load-lib').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const idx = parseInt(this.dataset.index);
+                    loadLibraryConfig(idx);
+                });
+            });
+            container.querySelectorAll('.delete-lib').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const idx = parseInt(this.dataset.index);
+                    if (confirm('Удалить конфигурацию?')) {
+                        deleteLibraryConfig(idx);
+                    }
+                });
+            });
+        }
+
+        function loadLibraryConfig(index) {
+            const library = getLibrary();
+            if (index < 0 || index >= library.length) return;
+            const config = library[index];
+            if (!config.competencies || config.competencies.length === 0) {
+                alert('Конфигурация пуста.');
+                return;
+            }
+            competencies = config.competencies;
+            saveData(competencies);
+            if (config.weights) {
+                CATEGORY_LIST.forEach(cat => {
+                    if (config.weights[cat] !== undefined) {
+                        catInputs[cat].value = config.weights[cat];
+                        catValueSpans[cat].textContent = config.weights[cat];
+                    }
+                });
+                updateSum();
+            }
+            resetSimulation();
+            refreshAll();
+            alert(`Конфигурация "${config.name}" загружена.`);
+        }
+
+        function deleteLibraryConfig(index) {
+            const library = getLibrary();
+            if (index < 0 || index >= library.length) return;
+            library.splice(index, 1);
+            saveLibrary(library);
+            renderLibrary();
+        }
+
+        function saveCurrentConfig() {
+            const name = prompt('Введите название конфигурации:');
+            if (!name || name.trim() === '') return;
+            const library = getLibrary();
+            const weights = {};
+            CATEGORY_LIST.forEach(cat => {
+                weights[cat] = parseInt(catInputs[cat].value) || 0;
+            });
+            const config = {
+                name: name.trim(),
+                competencies: JSON.parse(JSON.stringify(competencies)),
+                weights: weights,
+                savedAt: Date.now()
+            };
+            library.push(config);
+            saveLibrary(library);
+            renderLibrary();
+            alert(`Конфигурация "${name}" сохранена.`);
+        }
+
+        // ----------------------------------------------------------------------
+        // 10. ОБНОВЛЕНИЕ (refreshAll с вызовом renderLibrary и обновлением индикаторов)
+        // ----------------------------------------------------------------------
+                // ----------------------------------------------------------------------
+        // 10.0 АНИМАЦИЯ 3D КАМЕРЫ (вильнула после загрузки)
+        // ----------------------------------------------------------------------
+        let isFirst3DLoad = true;
+
+        function animate3DCameraOnce() {
+            if (!isFirst3DLoad) return;
+            isFirst3DLoad = false;
+
+            // Точки камеры (начало -> вправо -> влево -> в центр)
+            const frames = [
+                { x: 1.5, y: 1.5, z: 1.5 },
+                { x: 1.9, y: 1.6, z: 1.7 },
+                { x: 1.3, y: 1.9, z: 1.4 },
+                { x: 1.5, y: 1.5, z: 1.5 }
+            ];
+
+            let i = 0;
+            const duration = 700; // мс на каждый шаг
+
+            function step() {
+                if (i >= frames.length) return;
+                Plotly.relayout('scatter-plot', {
+                    'scene.camera.eye': frames[i],
+                    transition: { duration: duration, easing: 'cubic-in-out' }
+                });
+                i++;
+                setTimeout(step, duration);
+            }
+
+            // Запускаем через 0.5 секунды после загрузки
+            setTimeout(step, 500);
+        }
+                function refreshAll() {
+            const filtered = getFilteredData();
+            renderTernaryChart(filtered);
+            render3DChart(filtered, simRunning);
+            renderTable();
+            renderTrendCharts();
+            const totalCost = competencies.reduce((s, d) => s + d.cost_hour, 0);
+            renderGauge(totalCost);
+            renderLibrary();
+            updateStats();
+
+            // Вызываем анимацию при самом первом обновлении
+            animate3DCameraOnce();
+        }
+
+        // ----------------------------------------------------------------------
+        // 10.1 Обновление индикаторов среднего уровня и шагов
+        // ----------------------------------------------------------------------
+        function updateStats() {
+            const levelMap = { "Junior": 1, "Middle": 2, "Middle+": 3, "Senior": 4 };
+            if (competencies.length === 0) {
+                document.getElementById('avgLevelDisplay').textContent = '0.0';
+            } else {
+                const avgLevel = competencies.reduce((s, d) => s + (levelMap[d.master_level] || 2), 0) / competencies.length;
+                document.getElementById('avgLevelDisplay').textContent = avgLevel.toFixed(1);
+            }
+            document.getElementById('stepCounter').textContent = totalSteps;
+        }
+
+        // ----------------------------------------------------------------------
+        // 11. СИМУЛЯЦИЯ
+        // ----------------------------------------------------------------------
+        function updateSimulation() {
+            if (!simRunning || simPaused) return;
+
+            competencies.forEach(d => {
+                d.hours += 1;
+
+                let newLevel = d.master_level;
+                if (d.hours >= 500) {
+                    newLevel = 'Senior';
+                } else if (d.hours >= 250) {
+                    newLevel = 'Middle+';
+                } else if (d.hours >= 100) {
+                    newLevel = 'Middle';
+                } else if (d.hours >= 50) {
+                    newLevel = 'Junior';
+                }
+                if (newLevel !== d.master_level) {
+                    d.master_level = newLevel;
+                    d.cost_hour = calculateCost(d.category, d.master_level, d.name);
+                }
+
+                const deltaCost = (Math.random() - 0.5) * 0.05 * d.cost_hour;
+                let newCost = d.cost_hour + deltaCost;
+                newCost = Math.min(Math.max(newCost, 500), 7000);
+                newCost = Math.round(newCost / 50) * 50;
+                d.cost_hour = newCost;
+            });
+
+            const avgCost = competencies.reduce((s, d) => s + d.cost_hour, 0) / competencies.length;
+            const levelMap = { "Junior": 1, "Middle": 2, "Middle+": 3, "Senior": 4 };
+            const avgLevel = competencies.reduce((s, d) => s + (levelMap[d.master_level] || 2), 0) / competencies.length;
+            const count = competencies.length;
+            simDataHistory.push({ avgCost, avgLevel, count });
+            if (simDataHistory.length > 100) simDataHistory.shift();
+            totalSteps++;
+
+            const filtered = getFilteredData();
+            renderTernaryChart(filtered);
+            render3DChart(filtered, true);
+            renderTrendCharts();
+            renderTable(); // <--- ДОБАВЛЕНА ЭТА СТРОКА
+
+            const totalCost = competencies.reduce((s, d) => s + d.cost_hour, 0);
+            renderGauge(totalCost);
+
+            document.getElementById('simStatus').textContent = `🔄 Шаг ${totalSteps}`;
+            updateStats();
+        }
+
+        function startSimulation() {
+            if (simRunning) return;
+            if (simDataHistory.length === 0) {
+                const avgCost = competencies.reduce((s, d) => s + d.cost_hour, 0) / competencies.length;
+                const levelMap = { "Junior": 1, "Middle": 2, "Middle+": 3, "Senior": 4 };
+                const avgLevel = competencies.reduce((s, d) => s + (levelMap[d.master_level] || 2), 0) / competencies.length;
+                simDataHistory.push({ avgCost, avgLevel, count: competencies.length });
+                renderTrendCharts();
+            }
+            const totalCost = competencies.reduce((s, d) => s + d.cost_hour, 0);
+            maxTotalCost = totalCost * 1.5;
+            previousTotalCost = totalCost;
+            renderGauge(totalCost);
+            updateStats();
+
+            simRunning = true;
+            simPaused = false;
+            updateSimUI(); // Вызов обновления интерфейса
+            const speed = parseInt(document.getElementById('simSpeed').value);
+            if (simInterval) clearInterval(simInterval);
+            simInterval = setInterval(updateSimulation, speed);
+        }
+
+        function pauseSimulation() {
+            if (!simRunning) return;
+            simPaused = !simPaused;
+            updateSimUI(); // Вызов обновления интерфейса
+            if (simPaused) {
+                clearInterval(simInterval);
+                renderTable();
+            } else {
+                const speed = parseInt(document.getElementById('simSpeed').value);
+                if (simInterval) clearInterval(simInterval);
+                simInterval = setInterval(updateSimulation, speed);
+            }
+        }
+
+        function resetSimulation() {
+            clearInterval(simInterval);
+            simRunning = false;
+            simPaused = false;
+            simDataHistory = [];
+            totalSteps = 0;
+            updateSimUI(); // Вызов обновления интерфейса
+            competencies = loadData();
+            previousTotalCost = 0;
+            maxTotalCost = 100000;
+            renderGauge(0);
+            refreshAll();
+            updateStats();
+        }
+
+        // ----------------------------------------------------------------------
+        // 12. БАЛАНСИРОВКА
+        // ----------------------------------------------------------------------
+        function balanceCompetencies() {
+            const weights = {};
+            CATEGORY_LIST.forEach(cat => {
+                const val = parseInt(catInputs[cat].value) || 0;
+                weights[cat] = val;
+            });
+            const totalWeight = CATEGORY_LIST.reduce((s, cat) => s + weights[cat], 0);
+            if (totalWeight === 0) {
+                alert('Целевые доли не заданы (сумма = 0).');
+                return;
+            }
+
+            const currentCounts = {};
+            CATEGORY_LIST.forEach(cat => currentCounts[cat] = 0);
+            competencies.forEach(d => {
+                if (currentCounts[d.category] !== undefined) currentCounts[d.category]++;
+            });
+
+            const totalCurrent = competencies.length;
+            if (totalCurrent === 0) {
+                alert('Нет компетенций для балансировки.');
+                return;
+            }
+
+            const idealCounts = {};
+            CATEGORY_LIST.forEach(cat => {
+                idealCounts[cat] = (weights[cat] / 100) * totalCurrent;
+            });
+
+            const deficits = {};
+            CATEGORY_LIST.forEach(cat => {
+                deficits[cat] = idealCounts[cat] - currentCounts[cat];
+            });
+
+            const totalDeficit = Object.values(deficits).reduce((s, v) => s + Math.max(0, v), 0);
+            if (totalDeficit < 0.5) {
+                alert('Баланс уже близок к целевому. Дефицит менее 0.5.');
+                return;
+            }
+
+            const addCount = Math.max(1, Math.round(totalDeficit * 0.1));
+            const sortedDeficits = Object.entries(deficits)
+                .filter(([cat, val]) => val > 0)
+                .sort((a, b) => b[1] - a[1]);
+
+            let added = 0;
+            const levels = ['Junior', 'Middle', 'Middle+', 'Senior'];
+            const newCompetencies = [];
+
+            let idx = 0;
+            while (added < addCount) {
+                const cat = sortedDeficits[idx % sortedDeficits.length][0];
+                if (!cat) break;
+                const nameList = CATEGORY_NAMES_MAP[cat] || FALLBACK_NAMES;
+                let name = nameList[Math.floor(Math.random() * nameList.length)];
+                if (competencies.some(d => d.name === name) || newCompetencies.some(d => d.name === name)) {
+                    name += ` (${Math.floor(Math.random() * 100)})`;
+                }
+                const a1 = Math.random();
+                const a2 = Math.random();
+                const a3 = Math.random();
+                const level = levels[Math.floor(Math.random() * levels.length)];
+                const hoursMap = { "Junior": 50, "Middle": 100, "Middle+": 150, "Senior": 200 };
+                const hours = hoursMap[level] + Math.floor(Math.random() * 50);
+                const cost = calculateCost(cat, level, name);
+                const responsibilities = FALLBACK_RESPONSIBILITIES[cat] || ["Выполнение задач", "Отчётность"];
+                const contact = `user${Math.floor(Math.random() * 1000)}@enterprise.ru`;
+                newCompetencies.push({
+                    name,
+                    category: cat,
+                    axis1: a1,
+                    axis2: a2,
+                    axis3: a3,
+                    hours,
+                    master_level: level,
+                    cost_hour: cost,
+                    responsibilities: responsibilities.slice(0, 5),
+                    contact,
+                    projects: [],
+                    presentation: ''
+                });
+                added++;
+                idx++;
+                if (idx >= sortedDeficits.length) idx = 0;
+            }
+
+            if (newCompetencies.length === 0) {
+                alert('Не удалось сгенерировать новые компетенции.');
+                return;
+            }
+
+            competencies = competencies.concat(newCompetencies);
+            saveData(competencies);
+            if (simRunning && !simPaused) {
+                const avgCost = competencies.reduce((s, d) => s + d.cost_hour, 0) / competencies.length;
+                const levelMap = { "Junior": 1, "Middle": 2, "Middle+": 3, "Senior": 4 };
+                const avgLevel = competencies.reduce((s, d) => s + (levelMap[d.master_level] || 2), 0) / competencies.length;
+                simDataHistory.push({ avgCost, avgLevel, count: competencies.length });
+                if (simDataHistory.length > 100) simDataHistory.shift();
+                totalSteps++;
+            }
+            refreshAll();
+            alert(`Добавлено ${newCompetencies.length} новых компетенций для балансировки.`);
+        }
+
+        // ----------------------------------------------------------------------
+        // 13. МОДАЛКИ (без изменений)
+        // ----------------------------------------------------------------------
+        const viewModal = document.getElementById('viewModal');
+        const viewContent = document.getElementById('viewContent');
+        let viewIndex = -1;
+
+        function openViewModal(index) {
+            if (index < 0 || index >= competencies.length) return;
+            viewIndex = index;
+            const d = competencies[index];
+            document.getElementById('viewModalTitle').textContent = `Детали: ${d.name}`;
+            viewContent.innerHTML = `
+                <div class="detail-field"><label>Название:</label><span>${d.name}</span></div>
+                <div class="detail-field"><label>Категория:</label><span>${d.category}</span></div>
+                <div class="detail-field"><label>Ось X (Технологии):</label><span>${d.axis1.toFixed(2)}</span></div>
+                <div class="detail-field"><label>Ось Y (Люди):</label><span>${d.axis2.toFixed(2)}</span></div>
+                <div class="detail-field"><label>Ось Z (Системы):</label><span>${d.axis3.toFixed(2)}</span></div>
+                <div class="detail-field"><label>Часы практики:</label><span>${d.hours}</span></div>
+                <div class="detail-field"><label>Уровень:</label><span>${d.master_level}</span></div>
+                <div class="detail-field"><label>Стоимость часа:</label><span>${d.cost_hour} ₽</span></div>
+                <div class="detail-field"><label>Зоны ответственности:</label><span>${(d.responsibilities || []).join(', ') || '—'}</span></div>
+                <div class="detail-field"><label>Контакт:</label><span>${d.contact || '—'}</span></div>
+                <div class="detail-field"><label>Проекты:</label><span>${(d.projects || []).join(', ') || '—'}</span></div>
+                <div class="detail-field"><label>Презентация:</label><span>${d.presentation || '—'}</span></div>
+            `;
+            viewModal.classList.add('active');
+        }
+
+        function closeViewModal() {
+            viewModal.classList.remove('active');
+            viewIndex = -1;
+        }
+        document.getElementById('closeViewModal').addEventListener('click', closeViewModal);
+        document.getElementById('closeViewBtn').addEventListener('click', closeViewModal);
+        viewModal.addEventListener('click', function(e) { if (e.target === this) closeViewModal(); });
+        document.getElementById('viewEditBtn').addEventListener('click', function() {
+            if (viewIndex >= 0 && viewIndex < competencies.length) {
+                closeViewModal();
+                openEditModal(viewIndex);
+            }
+        });
+
+        // Модалка редактирования
+        const editModal = document.getElementById('editModal');
+        const editIndexInput = document.getElementById('editIndex');
+
+        function populateEditCategorySelect() {
+            const sel = document.getElementById('editCategory');
+            sel.innerHTML = CATEGORY_LIST.map(c => `<option value="${c}">${c}</option>`).join('');
+        }
+        populateEditCategorySelect();
+
+        function openEditModal(index = -1, presetData = null) {
+            if (viewModal.classList.contains('active')) closeViewModal();
+            if (index >= 0 && index < competencies.length) {
+                const d = competencies[index];
+                document.getElementById('editModalTitle').textContent = 'Редактирование компетенции';
+                document.getElementById('editName').value = d.name;
+                document.getElementById('editCategory').value = d.category;
+                document.getElementById('editAxis1').value = d.axis1;
+                document.getElementById('editAxis2').value = d.axis2;
+                document.getElementById('editAxis3').value = d.axis3;
+                document.getElementById('editHours').value = d.hours;
+                document.getElementById('editLevel').value = d.master_level;
+                document.getElementById('editCost').value = d.cost_hour;
+                document.getElementById('editResponsibilities').value = (d.responsibilities || []).join(', ');
+                document.getElementById('editContact').value = d.contact || '';
+                editIndexInput.value = index;
+            } else {
+                document.getElementById('editModalTitle').textContent = 'Добавление компетенции';
+                if (presetData) {
+                    document.getElementById('editName').value = presetData.name || '';
+                    document.getElementById('editCategory').value = presetData.category || CATEGORY_LIST[0];
+                    document.getElementById('editAxis1').value = presetData.axis1 ?? 0.33;
+                    document.getElementById('editAxis2').value = presetData.axis2 ?? 0.33;
+                    document.getElementById('editAxis3').value = presetData.axis3 ?? 0.34;
+                    document.getElementById('editHours').value = presetData.hours ?? 80;
+                    document.getElementById('editLevel').value = presetData.master_level || 'Middle';
+                    document.getElementById('editCost').value = presetData.cost_hour ?? 1500;
+                    document.getElementById('editResponsibilities').value = (presetData.responsibilities || []).join(', ');
+                    document.getElementById('editContact').value = presetData.contact || '';
+                } else {
+                    document.getElementById('editName').value = '';
+                    document.getElementById('editCategory').value = CATEGORY_LIST[0];
+                    document.getElementById('editAxis1').value = 0.33;
+                    document.getElementById('editAxis2').value = 0.33;
+                    document.getElementById('editAxis3').value = 0.34;
+                    document.getElementById('editHours').value = 80;
+                    document.getElementById('editLevel').value = 'Middle';
+                    document.getElementById('editCost').value = 1500;
+                    document.getElementById('editResponsibilities').value = '';
+                    document.getElementById('editContact').value = '';
+                }
+                editIndexInput.value = -1;
+            }
+            editModal.classList.add('active');
+        }
+
+        function closeEditModal() {
+            editModal.classList.remove('active');
+        }
+        document.getElementById('closeEditModal').addEventListener('click', closeEditModal);
+        document.getElementById('cancelEdit').addEventListener('click', closeEditModal);
+        document.getElementById('addCompetenceBtn').addEventListener('click', () => openEditModal(-1));
+
+        document.getElementById('editChooseFromLibBtn').addEventListener('click', function() {
+            const currentCategory = document.getElementById('editCategory').value;
+            openChooseModal(currentCategory).then(result => {
+                if (result) {
+                    document.getElementById('editName').value = result.name;
+                    document.getElementById('editCategory').value = result.category;
+                }
+            });
+        });
+
+        document.getElementById('saveEdit').addEventListener('click', function() {
+            const idx = parseInt(editIndexInput.value);
+            const name = document.getElementById('editName').value.trim();
+            if (!name) { alert('Название обязательно'); return; }
+            const category = document.getElementById('editCategory').value;
+            let a1 = parseFloat(document.getElementById('editAxis1').value) || 0;
+            let a2 = parseFloat(document.getElementById('editAxis2').value) || 0;
+            let a3 = parseFloat(document.getElementById('editAxis3').value) || 0;
+            const hours = parseInt(document.getElementById('editHours').value) || 0;
+            const level = document.getElementById('editLevel').value;
+            const cost = parseFloat(document.getElementById('editCost').value) || 0;
+            const resp = document.getElementById('editResponsibilities').value.split(',').map(s => s.trim()).filter(Boolean);
+            const contact = document.getElementById('editContact').value.trim();
+
+            const newObj = {
+                name,
+                category,
+                axis1: a1,
+                axis2: a2,
+                axis3: a3,
+                hours,
+                master_level: level,
+                cost_hour: cost,
+                responsibilities: resp,
+                contact: contact,
+                projects: [],
+                presentation: ''
+            };
+
+            if (idx >= 0 && idx < competencies.length) {
+                competencies[idx] = newObj;
+            } else {
+                competencies.push(newObj);
+            }
+            saveData(competencies);
+            closeEditModal();
+            refreshAll();
+        });
+
+        editModal.addEventListener('click', function(e) {
+            if (e.target === this) closeEditModal();
+        });
+
+        // ----------------------------------------------------------------------
+        // 14. МОДАЛКА ВЫБОРА СПРАВОЧНИКА
+        // ----------------------------------------------------------------------
+        const chooseModal = document.getElementById('chooseModal');
+        const chooseCategory = document.getElementById('chooseCategory');
+        const chooseName = document.getElementById('chooseName');
+        let pendingChooseResolver = null;
+
+        function fillChooseCategorySelect(initialCategory) {
+            chooseCategory.innerHTML = CATEGORY_LIST.map(c => `<option value="${c}" ${c === initialCategory ? 'selected' : ''}>${c}</option>`).join('');
+        }
+
+        function updateChooseNames() {
+            const cat = chooseCategory.value;
+            const names = CATEGORY_NAMES_MAP[cat] || FALLBACK_NAMES;
+            chooseName.innerHTML = names.map(n => `<option value="${n}">${n}</option>`).join('');
+        }
+
+        chooseCategory.addEventListener('change', updateChooseNames);
+
+        function openChooseModal(initialCategory) {
+            fillChooseCategorySelect(initialCategory || CATEGORY_LIST[0]);
+            updateChooseNames();
+            chooseModal.classList.add('active');
+            return new Promise((resolve) => {
+                pendingChooseResolver = resolve;
+            });
+        }
+
+        function closeChooseModal() {
+            chooseModal.classList.remove('active');
+            pendingChooseResolver = null;
+        }
+
+        document.getElementById('closeChooseModal').addEventListener('click', closeChooseModal);
+        document.getElementById('cancelChooseBtn').addEventListener('click', closeChooseModal);
+        chooseModal.addEventListener('click', function(e) {
+            if (e.target === this) closeChooseModal();
+        });
+
+        document.getElementById('chooseBtn').addEventListener('click', function() {
+            const category = chooseCategory.value;
+            const name = chooseName.value;
+            if (!name) return;
+            if (pendingChooseResolver) {
+                pendingChooseResolver({ category, name });
+                pendingChooseResolver = null;
+            }
+            closeChooseModal();
+        });
+
+        // ----------------------------------------------------------------------
+        // 15. ГЕНЕРАЦИЯ
+        // ----------------------------------------------------------------------
+        function generateCompetencies(categoryWeights, count, models) {
+            const result = [];
+            const entries = Object.entries(categoryWeights).filter(([_, w]) => w > 0);
+            const totalWeight = entries.reduce((s, [_, w]) => s + w, 0);
+            if (totalWeight === 0) return result;
+            const levels = ['Junior', 'Middle', 'Middle+', 'Senior'];
+
+            for (let i = 0; i < count; i++) {
+                let rand = Math.random() * totalWeight;
+                let cum = 0;
+                let chosenCat = entries[0][0];
+                for (const [cat, w] of entries) {
+                    cum += w;
+                    if (rand <= cum) { chosenCat = cat; break; }
+                }
+
+                let nameList = CATEGORY_NAMES_MAP[chosenCat] || FALLBACK_NAMES;
+                if (nameList.length === 0) nameList = FALLBACK_NAMES;
+                let name = nameList[Math.floor(Math.random() * nameList.length)];
+                if (result.some(d => d.name === name)) {
+                    name += ` (${i + 1})`;
+                }
+
+                const a1 = Math.random();
+                const a2 = Math.random();
+                const a3 = Math.random();
+
+                const level = levels[Math.floor(Math.random() * levels.length)];
+                const hoursMap = { "Junior": 50, "Middle": 100, "Middle+": 150, "Senior": 200 };
+                let hours = hoursMap[level] + Math.floor(Math.random() * 50);
+                const cost = calculateCost(chosenCat, level, name);
+
+                let responsibilities = FALLBACK_RESPONSIBILITIES[chosenCat] || ["Выполнение задач", "Отчётность"];
+                if (responsibilities.length > 5) {
+                    responsibilities = responsibilities.slice(0, 5);
+                }
+
+                const contact = `user${i + 1}@enterprise.ru`;
+                result.push({
+                    name: name,
+                    category: chosenCat,
+                    axis1: a1,
+                    axis2: a2,
+                    axis3: a3,
+                    hours,
+                    master_level: level,
+                    cost_hour: cost,
+                    responsibilities: responsibilities,
+                    contact,
+                    projects: [],
+                    presentation: ''
+                });
+            }
+            return result;
+        }
+
+        // ----------------------------------------------------------------------
+        // 16. ИНИЦИАЛИЗАЦИЯ ЛЕВОЙ ПАНЕЛИ
+        // ----------------------------------------------------------------------
+        const genCountInput = document.getElementById('genCount');
+
+        const categoryContainer = document.getElementById('categoryPropsContainer');
+        const catInputs = {},
+            catValueSpans = {};
+        CATEGORY_LIST.forEach(cat => {
+            const div = document.createElement('div');
+            div.className = 'cat-item';
+            const label = document.createElement('label');
+            label.textContent = cat;
+            const range = document.createElement('input');
+            range.type = 'range';
+            range.min = 0;
+            range.max = 100;
+            range.value = 0;
+            const span = document.createElement('span');
+            span.className = 'value-display';
+            span.textContent = '0';
+            div.appendChild(label);
+            div.appendChild(range);
+            div.appendChild(span);
+            categoryContainer.appendChild(div);
+            catInputs[cat] = range;
+            catValueSpans[cat] = span;
+        });
+
+        // Базовые значения (без бонусов). Нужны для отката и расчетов.
+        let defaultBaseValues = {};
+
+        const defaultValues = {
+            "Топ-менеджмент": 8, "Хозчасть": 8, "Безопасность": 8, "Основные фонды": 8,
+            "Склады": 8, "Логистика": 8, "Закупки": 8, "План производства": 8,
+            "Продажи": 8, "Финансовый портфель": 7, "Персонал": 7, "Администрация": 7,
+            "Автоматизация": 7
+        };
+
+        // Фиксируем базовые значения и заполняем слайдеры
+        CATEGORY_LIST.forEach(cat => {
+            if (defaultValues[cat] !== undefined) {
+                catInputs[cat].value = defaultValues[cat];
+                catValueSpans[cat].textContent = defaultValues[cat];
+            }
+            defaultBaseValues[cat] = parseInt(catInputs[cat].value) || 0;
+        });
+
+        function updateSum() {
+            let sum = 0;
+            CATEGORY_LIST.forEach(cat => {
+                const val = parseInt(catInputs[cat].value) || 0;
+                sum += val;
+                catValueSpans[cat].textContent = val;
+            });
+            const display = document.getElementById('sumDisplay');
+            display.textContent = `Сумма: ${sum}%`;
+            display.className = (Math.abs(sum - 100) < 0.1) ? 'sum-display ok' : 'sum-display err';
+            return sum;
+        }
+        CATEGORY_LIST.forEach(cat => catInputs[cat].addEventListener('input', updateSum));
+        updateSum();
+
+        document.getElementById('equalizeBtn').addEventListener('click', function() {
+            const n = CATEGORY_LIST.length;
+            const base = Math.floor(100 / n);
+            let remainder = 100 - base * n;
+            CATEGORY_LIST.forEach((cat, i) => {
+                let val = base + (i < remainder ? 1 : 0);
+                catInputs[cat].value = val;
+                catValueSpans[cat].textContent = val;
+                defaultBaseValues[cat] = val; // Обновляем базу
+            });
+            updateSum();
+        });
+
+        document.getElementById('normalizeBtn').addEventListener('click', function() {
+            let values = CATEGORY_LIST.map(cat => parseInt(catInputs[cat].value) || 0);
+            let total = values.reduce((a, b) => a + b, 0);
+            if (total === 0) {
+                const equally = Math.floor(100 / CATEGORY_LIST.length);
+                let remainder = 100 - equally * CATEGORY_LIST.length;
+                CATEGORY_LIST.forEach((cat, i) => {
+                    let val = equally + (i < remainder ? 1 : 0);
+                    catInputs[cat].value = val;
+                    catValueSpans[cat].textContent = val;
+                    defaultBaseValues[cat] = val; // Обновляем базу
+                });
+            } else {
+                let newValues = values.map(v => (v / total) * 100);
+                let rounded = newValues.map(v => Math.floor(v));
+                let sumRounded = rounded.reduce((a, b) => a + b, 0);
+                let remainder = 100 - sumRounded;
+                let fractions = newValues.map((v, i) => v - Math.floor(v));
+                let indices = fractions.map((_, i) => i).sort((a, b) => fractions[b] - fractions[a]);
+                for (let i = 0; i < remainder && i < indices.length; i++) {
+                    rounded[indices[i]] += 1;
+                }
+                CATEGORY_LIST.forEach((cat, i) => {
+                    catInputs[cat].value = rounded[i];
+                    catValueSpans[cat].textContent = rounded[i];
+                    defaultBaseValues[cat] = rounded[i]; // Обновляем базу
+                });
+            }
+            updateSum();
+        });
+
+        document.getElementById('generateBtn').addEventListener('click', function() {
+            const weights = {};
+            let total = 0;
+            CATEGORY_LIST.forEach(cat => {
+                const val = parseInt(catInputs[cat].value) || 0;
+                weights[cat] = val;
+                total += val;
+            });
+            if (Math.abs(total - 100) > 0.1) {
+                alert(`Сумма процентов должна быть равна 100%. Сейчас ${total}%.`);
+                return;
+            }
+            const count = parseInt(genCountInput.value) || 250;
+            if (count < 1) { alert('Количество должно быть не менее 1'); return; }
+            const checkedModels = Array.from(document.querySelectorAll('#modelCheckboxes input:checked')).map(cb => cb.value);
+            const generated = generateCompetencies(weights, count, checkedModels);
+            if (generated.length === 0) { alert('Не удалось сгенерировать'); return; }
+            if (!confirm(`Будет создано ${generated.length} новых компетенций. Текущие данные будут заменены. Продолжить?`)) return;
+
+            competencies = generated;
+            saveData(competencies);
+            currentFilter = '';
+            currentSearch = '';
+            document.getElementById('categoryFilter').value = '';
+            document.getElementById('searchInput').value = '';
+            resetSimulation();
+            refreshAll();
+            alert('Генерация выполнена! Данные обновлены.');
+        });
+
+        // Список бизнес-моделей (ВЫКЛЮЧЕНЫ ПО УМОЛЧАНИЮ)
+        const modelList = [
+            "E-Com", "SaaS", "Производство", "Логистика", "Образование",
+            "Здравоохранение", "Финансы", "Консалтинг", "Агро", "Энергетика"
+        ];
+        const modelContainer = document.getElementById('modelCheckboxes');
+        modelList.forEach(m => {
+            const label = document.createElement('label');
+            // Убрали атрибут checked, чтобы по умолчанию было выключено
+            label.innerHTML = `<input type="checkbox" value="${m}"> ${m}`;
+            modelContainer.appendChild(label);
+        });
+
+        // ЛОГИКА БОНУСОВ ОТ МОДЕЛЕЙ
+        function applyModelBonuses() {
+            // Начинаем с текущих базовых значений (без бонусов)
+            let newValues = { ...defaultBaseValues };
+
+            // Суммируем бонусы от всех выбранных моделей
+            document.querySelectorAll('#modelCheckboxes input:checked').forEach(cb => {
+                const bonuses = MODEL_BONUSES[cb.value];
+                if (bonuses) {
+                    for (const cat in bonuses) {
+                        if (newValues[cat] !== undefined) {
+                            newValues[cat] += bonuses[cat];
+                        }
+                    }
+                }
+            });
+
+            // Применяем значения к ползункам (ограничивая 0-100)
+            CATEGORY_LIST.forEach(cat => {
+                const val = Math.min(100, Math.max(0, newValues[cat]));
+                catInputs[cat].value = val;
+                catValueSpans[cat].textContent = val;
+            });
+
+            updateSum();
+        }
+
+        // Навешиваем обработчики на все чекбоксы
+        document.querySelectorAll('#modelCheckboxes input').forEach(cb => {
+            cb.addEventListener('change', applyModelBonuses);
+        });
+
+        // ----------------------------------------------------------------------
+        // 17. УПРАВЛЕНИЕ СИМУЛЯЦИЕЙ
+        // ----------------------------------------------------------------------
+        document.getElementById('simToggleBtn').addEventListener('click', function() {
+            const controls = document.getElementById('simControls');
+            controls.style.display = controls.style.display === 'none' ? 'flex' : 'none';
+        });
+
+        document.getElementById('simStartBtn').addEventListener('click', startSimulation);
+        document.getElementById('simPauseBtn').addEventListener('click', pauseSimulation);
+        document.getElementById('simResetBtn').addEventListener('click', resetSimulation);
+        document.getElementById('balanceBtn').addEventListener('click', balanceCompetencies);
+
+        document.getElementById('simSpeed').addEventListener('input', function() {
+            document.getElementById('speedLabel').textContent = this.value;
+            if (simRunning && !simPaused) {
+                clearInterval(simInterval);
+                const speed = parseInt(this.value);
+                simInterval = setInterval(updateSimulation, speed);
+            }
+        });
+
+        // ----------------------------------------------------------------------
+        // 18. КНОПКА СОХРАНЕНИЯ БИБЛИОТЕКИ
+        // ----------------------------------------------------------------------
+        document.getElementById('saveLibraryBtn').addEventListener('click', saveCurrentConfig);
+
+        // ----------------------------------------------------------------------
+        // 19. ПЕРЕКЛЮЧЕНИЕ ТЕМЫ
+        // ----------------------------------------------------------------------
+        const themeToggle = document.getElementById('themeToggle');
+        function setTheme(theme) {
+            if (theme === 'dark') {
+                document.body.classList.add('dark-mode');
+                themeToggle.textContent = '☀️';
+                localStorage.setItem('theme', 'dark');
+            } else {
+                document.body.classList.remove('dark-mode');
+                themeToggle.textContent = '🌙';
+                localStorage.setItem('theme', 'light');
+            }
+            // Перерисовываем графики, чтобы обновить фон
+            refreshAll();
+        }
+
+        // Восстанавливаем сохранённую тему
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            setTheme('dark');
+        } else {
+            setTheme('light');
+        }
+
+        themeToggle.addEventListener('click', function() {
+            const isDark = document.body.classList.contains('dark-mode');
+            setTheme(isDark ? 'light' : 'dark');
+        });
+
+        // ----------------------------------------------------------------------
+        // 20. ИНИЦИАЛИЗАЦИЯ
+        // ----------------------------------------------------------------------
+        document.getElementById('categoryFilter').addEventListener('change', function() {
+            currentFilter = this.value;
+            refreshAll();
+        });
+        document.getElementById('searchInput').addEventListener('input', function() {
+            currentSearch = this.value;
+            refreshAll();
+        });
+
+         refreshAll();
+
+        // Устанавливаем курсор в поле "Кол-во компетенций" сразу при загрузке
+        genCountInput.focus();
+
+        const ternaryDiv = document.getElementById('ternary-plot');
+        const scatterDiv = document.getElementById('scatter-plot');
+        ternaryDiv.on('plotly_click', handlePlotClick);
+        scatterDiv.on('plotly_click', handlePlotClick);
+
+        console.log('Приложение загружено. Доступно переключение темы День/Ночь.');
+        // Можно добавить сразу после обработчика события клика на generateBtn
+        genCountInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault(); // Предотвращаем любые стандартные действия (если вдруг появится форма)
+                document.getElementById('generateBtn').click(); // Имитируем нажатие кнопки
+            }
+        });
+        // ----------------------------------------------------------------------
+        // 21. ЛОГИКА МОДАЛКИ README
+        // ----------------------------------------------------------------------
+        const readmeModal = document.getElementById('readmeModal');
+        const openReadmeBtn = document.getElementById('readmeBtn');
+        const closeReadmeBtn = document.getElementById('closeReadmeBtn');
+        const closeReadmeModalBtn = document.getElementById('closeReadmeModal');
+
+        function openReadmeModal() {
+            readmeModal.classList.add('active');
+        }
+
+        function closeReadmeModalFunc() {
+            readmeModal.classList.remove('active');
+        }
+
+        // Клик по кнопке открывает окно
+        openReadmeBtn.addEventListener('click', openReadmeModal);
+        // Клик по кнопкам закрытия
+        closeReadmeBtn.addEventListener('click', closeReadmeModalFunc);
+        closeReadmeModalBtn.addEventListener('click', closeReadmeModalFunc);
+        // Клик по затемненному фону закрывает окно
+        readmeModal.addEventListener('click', function(e) {
+            if (e.target === this) closeReadmeModalFunc();
+        });
+
+        // ----------------------------------------------------------------------
+        // 23. СИНХРОНИЗАЦИЯ КНОПОК СИМУЛЯЦИИ В ЛЕВОЙ ПАНЕЛИ
+        // ----------------------------------------------------------------------
+        function updateSimUI() {
+            const statusText = simRunning ? (simPaused ? '⏸️ Пауза' : '▶️ Идёт симуляция...') : '⏹️ Остановлена';
+
+            // Обновляем верхние элементы
+            document.getElementById('simStatus').textContent = statusText;
+            document.getElementById('simStartBtn').disabled = simRunning;
+            document.getElementById('simPauseBtn').textContent = simPaused ? '▶️ Продолжить' : '⏸️ Пауза';
+
+            // Обновляем нижние элементы (дубликаты)
+            document.getElementById('simStatusSide').textContent = statusText;
+            document.getElementById('simStartBtnSide').disabled = simRunning;
+            document.getElementById('simPauseBtnSide').textContent = simPaused ? '▶️ Продолжить' : '⏸️ Пауза';
+        }
+
+        // Навешиваем обработчики на нижние кнопки
+        document.getElementById('simStartBtnSide').addEventListener('click', startSimulation);
+        document.getElementById('simPauseBtnSide').addEventListener('click', pauseSimulation);
+        document.getElementById('simResetBtnSide').addEventListener('click', resetSimulation);
+        document.getElementById('balanceBtnSide').addEventListener('click', balanceCompetencies);
+
+        // Синхронизация ползунка скорости
+        document.getElementById('simSpeedSide').addEventListener('input', function() {
+            const speed = parseInt(this.value);
+            // Обновляем метку и верхний ползунок
+            document.getElementById('speedLabelSide').textContent = speed;
+            document.getElementById('simSpeed').value = speed;
+            document.getElementById('speedLabel').textContent = speed;
+
+            // Если симуляция идет, перезапускаем интервал с новой скоростью
+            if (simRunning && !simPaused) {
+                clearInterval(simInterval);
+                simInterval = setInterval(updateSimulation, speed);
+            }
+        });
+
+        // ----------------------------------------------------------------------
+        // 24. ГЕНЕРАЦИЯ ПРЕДУСТАНОВЛЕННЫХ КОНФИГУРАЦИЙ (ДОБАВЛЯЕТ ТОЛЬКО НЕДОСТАЮЩИЕ)
+        // ----------------------------------------------------------------------
+        function seedDefaultLibrary() {
+            const library = getLibrary();
+            const defaultNames = [
+                "🌀 Спираль", "✝️ Крест", "🧊 Кубики", "⭐ Звезда",
+                "❄️ Снежинка", "🕸️ Фрактал А (Треугольник)", "🕸️ Фрактал Б (Губка)", "🌐 Сфера"
+            ];
+
+            // Проверяем, каких паттернов не хватает
+            let missingDefaults = false;
+            for (let name of defaultNames) {
+                if (!library.some(item => item.name === name)) {
+                    missingDefaults = true;
+                    break;
+                }
+            }
+            if (!missingDefaults) return;
+
+            const levels = ['Junior', 'Middle', 'Middle+', 'Senior'];
+            const hoursMap = { "Junior": 50, "Middle": 100, "Middle+": 150, "Senior": 200 };
+
+            const getComp = (name, cat, a1, a2, a3, level, hours) => ({
+                name, category: cat, axis1: a1, axis2: a2, axis3: a3, hours, master_level: level,
+                cost_hour: calculateCost(cat, level, name), responsibilities: ["Тестовая зона", "Оптимизация"],
+                contact: "user@example.com", projects: [], presentation: ""
+            });
+
+            const getWeights = () => {
+                let weights = {};
+                CATEGORY_LIST.forEach(cat => weights[cat] = defaultBaseValues[cat]);
+                return weights;
+            };
+
+            const newConfigs = [];
+
+            // 1. Спираль
+            let spiralComps = [];
+            for (let i = 0; i < 50; i++) {
+                let t = (i / 50) * Math.PI * 6;
+                let r = i / 50;
+                let x = 0.5 + r * Math.cos(t) * 0.5;
+                let y = 0.5 + r * Math.sin(t) * 0.5;
+                let z = (x + y) / 2;
+                let cat = CATEGORY_LIST[i % CATEGORY_LIST.length];
+                let lvl = levels[i % 4];
+                spiralComps.push(getComp(`Спираль ${i}`, cat, x, y, z, lvl, hoursMap[lvl]));
+            }
+            newConfigs.push({ name: "🌀 Спираль", competencies: spiralComps, weights: getWeights(), savedAt: Date.now() });
+
+            // 2. Крест
+            let crossComps = [];
+            for (let i = 0; i < 60; i++) {
+                let axis = i % 3;
+                let t = (i / 60) * 2 - 1;
+                let a1 = 0.5, a2 = 0.5, a3 = 0.5;
+                if (axis === 0) a1 = 0.5 + t * 0.5;
+                if (axis === 1) a2 = 0.5 + t * 0.5;
+                if (axis === 2) a3 = 0.5 + t * 0.5;
+                let cat = CATEGORY_LIST[(i * 2) % CATEGORY_LIST.length];
+                let lvl = levels[i % 4];
+                crossComps.push(getComp(`Крест ${i}`, cat, a1, a2, a3, lvl, hoursMap[lvl]));
+            }
+            newConfigs.push({ name: "✝️ Крест", competencies: crossComps, weights: getWeights(), savedAt: Date.now() });
+
+            // 3. Кубики
+            let cubeComps = [];
+            for (let i = 0; i < 64; i++) {
+                let a1 = (i % 4) / 3;
+                let a2 = (Math.floor(i / 4) % 4) / 3;
+                let a3 = (Math.floor(i / 16) % 4) / 3;
+                let cat = CATEGORY_LIST[(i) % CATEGORY_LIST.length];
+                let lvl = levels[i % 4];
+                cubeComps.push(getComp(`Кубики ${i}`, cat, a1, a2, a3, lvl, hoursMap[lvl]));
+            }
+            newConfigs.push({ name: "🧊 Кубики", competencies: cubeComps, weights: getWeights(), savedAt: Date.now() });
+
+            // 4. Звезда
+            let starComps = [];
+            for (let i = 0; i < 60; i++) {
+                let angle = (i % 10) / 10 * Math.PI * 2;
+                let r = (i % 10 < 5) ? 0.2 : 0.5;
+                let x = 0.5 + r * Math.cos(angle);
+                let y = 0.5 + r * Math.sin(angle);
+                let z = 0.5;
+                let cat = CATEGORY_LIST[(i * 3) % CATEGORY_LIST.length];
+                let lvl = levels[i % 4];
+                starComps.push(getComp(`Звезда ${i}`, cat, x, y, z, lvl, hoursMap[lvl]));
+            }
+            newConfigs.push({ name: "⭐ Звезда", competencies: starComps, weights: getWeights(), savedAt: Date.now() });
+
+            // 5. Снежинка
+            let snowComps = [];
+            for (let i = 0; i < 60; i++) {
+                let sector = i % 6;
+                let r = (i / 60);
+                let angle = sector * Math.PI / 3;
+                let x = 0.5 + r * Math.cos(angle);
+                let y = 0.5 + r * Math.sin(angle);
+                let z = 0.5 + (r * Math.sin(angle * 2)) / 2;
+                let cat = CATEGORY_LIST[(i * 5) % CATEGORY_LIST.length];
+                let lvl = levels[i % 4];
+                snowComps.push(getComp(`Снежинка ${i}`, cat, x, y, z, lvl, hoursMap[lvl]));
+            }
+            newConfigs.push({ name: "❄️ Снежинка", competencies: snowComps, weights: getWeights(), savedAt: Date.now() });
+
+            // 6. Фрактал А (Треугольник Серпинского)
+            let fractalAComps = [];
+            for (let i = 0; i < 80; i++) {
+                let a1, a2, a3;
+                let r = Math.random();
+                if (r < 0.33) { a1 = 0.5 + Math.random()*0.5; a2 = Math.random()*0.5; a3 = 1 - a1 - a2; }
+                else if (r < 0.66) { a2 = 0.5 + Math.random()*0.5; a1 = Math.random()*0.5; a3 = 1 - a1 - a2; }
+                else { a3 = 0.5 + Math.random()*0.5; a1 = Math.random()*0.5; a2 = 1 - a1 - a3; }
+                if (a3 < 0) a3 = 0;
+                let cat = CATEGORY_LIST[(i) % CATEGORY_LIST.length];
+                let lvl = levels[i % 4];
+                fractalAComps.push(getComp(`Фрактал А ${i}`, cat, a1, a2, a3, lvl, hoursMap[lvl]));
+            }
+            newConfigs.push({ name: "🕸️ Фрактал А (Треугольник)", competencies: fractalAComps, weights: getWeights(), savedAt: Date.now() });
+
+            // 7. Фрактал Б (Губка Менгера)
+            let fractalBComps = [];
+            for (let i = 0; i < 80; i++) {
+                let a1, a2, a3;
+                let r = Math.random();
+                if (r < 0.25) { a1 = 0.3 + Math.random()*0.4; a2 = 0.3 + Math.random()*0.4; a3 = 0.3 + Math.random()*0.4; }
+                else if (r < 0.5) { a1 = Math.random()*0.2; a2 = Math.random()*0.2; a3 = Math.random()*0.8; }
+                else if (r < 0.75) { a1 = Math.random()*0.8; a2 = Math.random()*0.2; a3 = Math.random()*0.2; }
+                else { a1 = Math.random()*0.2; a2 = Math.random()*0.8; a3 = Math.random()*0.2; }
+                let cat = CATEGORY_LIST[(i) % CATEGORY_LIST.length];
+                let lvl = levels[i % 4];
+                fractalBComps.push(getComp(`Фрактал Б ${i}`, cat, a1, a2, a3, lvl, hoursMap[lvl]));
+            }
+            newConfigs.push({ name: "🕸️ Фрактал Б (Губка)", competencies: fractalBComps, weights: getWeights(), savedAt: Date.now() });
+
+            // 8. Сфера
+            let sphereComps = [];
+            for (let i = 0; i < 90; i++) {
+                let phi = Math.acos(2 * Math.random() - 1);
+                let theta = Math.random() * Math.PI * 2;
+                let x = 0.5 + 0.4 * Math.sin(phi) * Math.cos(theta);
+                let y = 0.5 + 0.4 * Math.sin(phi) * Math.sin(theta);
+                let z = 0.5 + 0.4 * Math.cos(phi);
+                let cat = CATEGORY_LIST[(i * 4) % CATEGORY_LIST.length];
+                let lvl = levels[i % 4];
+                sphereComps.push(getComp(`Сфера ${i}`, cat, x, y, z, lvl, hoursMap[lvl]));
+            }
+            newConfigs.push({ name: "🌐 Сфера", competencies: sphereComps, weights: getWeights(), savedAt: Date.now() });
+
+            // Добавляем только недостающие конфигурации к существующей библиотеке
+            newConfigs.forEach(config => {
+                if (!library.some(item => item.name === config.name)) {
+                    library.push(config);
+                }
+            });
+            saveLibrary(library);
+        }
+
+        // Запуск (сработает только если нет этих паттернов, даже если есть другие сохранёнки)
+        seedDefaultLibrary();
+        renderLibrary();
+    </script>
+</body>
+</html>
